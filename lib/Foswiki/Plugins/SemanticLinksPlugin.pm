@@ -49,18 +49,18 @@ sub initPlugin {
     if ( defined &Foswiki::Meta::registerMETA ) {
         Foswiki::Meta::registerMETA(
             'SLPROPERTIES',
-            require => qw(value),
-            allow   => qw(num)
+            require => [qw(value)],
+            allow   => [qw(num)]
         );
         Foswiki::Meta::registerMETA(
             'SLPROPERTY',
-            require => qw(name values),
-            allow   => qw(num)
+            require => [qw(name values)],
+            allow   => [qw(num)]
         );
         Foswiki::Meta::registerMETA(
             'SLPROPERTYVALUE',
-            require => qw(name value property),
-            allow   => qw(query anchor text)
+            require => [qw(name value property)],
+            allow   => [qw(query anchor text)]
         );
     }
 
