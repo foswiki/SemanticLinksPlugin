@@ -7,8 +7,10 @@
 %TOC%
 
 ---++ PreferenceSettings
-   * For now, the plugin is always enabled. <del>Enable the plugin, usually in your !Main.SitePreferences or WebPreferences:</del>
-   <verbatim class="tml">   * Set SEMANTICLINKSPLUGIN_ENABLED = on</verbatim>
+Enable the plugin, usually in your !Main.SitePreferences or the WebPreferences topic for the web where it is needed:
+   <verbatim class="tml">
+   * Set SEMANTICLINKSPLUGIN_ENABLED = on
+   </verbatim>
 
 ---++ Topic Syntax
 Use the following link syntax to create a special 'semantic' link. Semantic links are rendered using templates (see [[#Templates]]) but also populate special metadata (=META:SLPROPERTY=, see [[#Meta_Data]]).
@@ -54,9 +56,9 @@ When rendering a link, %TOPIC% travels a slightly different skin path to that of
 ---+++ DEFs
 | *TMPL:DEF{...}*                             | *Description*                                                            |
 | =SemanticLinksPlugin::Link=                 | Build markup for an =[<nop>[ordinary::link]]=                            |
-| =SemanticLinksPlugin::LinkWithtext=         | Build markup for a =[<nop>[link::with][a text link]]=                         |
+| =SemanticLinksPlugin::LinkWithtext=         | Build markup for a =[<nop>[link::with][text]]=                         |
 | =SemanticLinksPlugin::MissingLink=          | Build markup for an =[<nop>[ordinary::link]]= to a non-existant topic    |
-| =SemanticLinksPlugin::MissingLinkWithtext=  | Build markup for a =[<nop>[link::with][a text link]]= to a non-existant topic |
+| =SemanticLinksPlugin::MissingLinkWithtext=  | Build markup for a =[<nop>[link::with][text]]= to a non-existant topic |
 
 ---+++ Tokens
 Given a link of the form:
@@ -120,10 +122,10 @@ If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], i
 and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
 <verbatim class="tml">
  %META:SLPROPERTIES{                                      value="Eat,PreyOf"                    }%
- %META:SLPROPERTY{     name="Eat"                         values="Flies,Mosquitos" num="2"}%
+ %META:SLPROPERTY{     name="Eat"                         values="Flies,Mosquitos" num="2"      }%
  %META:SLPROPERTYVALUE{name="Eat__1"    property="Eat"    value="Flies"                         }%
  %META:SLPROPERTYVALUE{name="Eat__2"    property="Eat"    value="Mosquitos"                     }%
- %META:SLPROPERTY{     name="PreyOf"                      values="Snakes"          num="1"}%
+ %META:SLPROPERTY{     name="PreyOf"                      values="Snakes"          num="1"      }%
  %META:SLPROPERTYVALUE{name="PreyOf__1" property="PreyOf" value="Snakes"                        }%</verbatim>
 
 A complete list of properties on a given topic may be obtained using:
@@ -170,13 +172,11 @@ One line description, required for extensions repository catalog.
 
 ---++ TODO
    * Proper example (or new macro) to dump semantic links on a given topic in a more controlled way ( =%<nop>TEXT%= isn't good enough... )
-   * Split the plugin core into a separate module which should be lazy-loaded to improve request times on plain CGI environments
    * The example templates are kind of lame...
    * Ship with an interesting set of example topics
    * Ship an example that abuses the templating feature to do interesting linked-data ajax things with semantic links, Eg. =[<nop>[ISBN::2134567]]= could have a template in the ISBN property topic which renders some specially styled =&lt;span&gt;= tag to enable some jquery code to go out and resolve the ISBN into publisher, author, book title... in the browser.
 
 ---++ Known Issues
-   * For now, the plugin is always enabled
    * For now, values are expected to be internal links to other topics
    * The [[#Meta_Data]] examples aren't rendering VarQUERY or VarFORMAT examples properly; core bug? Wrong syntax?
    * Sanitisation of property/value?
@@ -205,11 +205,11 @@ One line description, required for extensions repository catalog.
 %META:SLPROPERTYVALUE{name="Eat__1" anchor="" property="Eat" query="" text="mosquitos" value="Mosquitos"}%
 %META:SLPROPERTYVALUE{name="Eat__2" anchor="" property="Eat" query="" text="eat flies" value="Flies"}%
 %META:SLPROPERTYVALUE{name="IsPartOf__1" anchor="" property="IsPartOf" query="" text="docs::misc" value="UserDocumentationCategory"}%
-%META:SLPROPERTY{name="System.SemanticIsPartOf" numvalues="1" values="System.UserDocumentationCategory"}%
-%META:SLPROPERTY{name="Example.Property" numvalues="1" values="UserDocumentationCategory"}%
-%META:SLPROPERTY{name="PreyOf" numvalues="1" values="Snakes"}%
-%META:SLPROPERTY{name="Eat" numvalues="2" values="Mosquitos,Flies"}%
-%META:SLPROPERTY{name="IsPartOf" numvalues="1" values="UserDocumentationCategory"}%
+%META:SLPROPERTY{name="System.SemanticIsPartOf" num="1" values="System.UserDocumentationCategory"}%
+%META:SLPROPERTY{name="Example.Property" num="1" values="UserDocumentationCategory"}%
+%META:SLPROPERTY{name="PreyOf" num="1" values="Snakes"}%
+%META:SLPROPERTY{name="Eat" num="2" values="Mosquitos,Flies"}%
+%META:SLPROPERTY{name="IsPartOf" num="1" values="UserDocumentationCategory"}%
 %META:PREFERENCE{name="PERM_ID_HUMAN" title="PERM_ID_HUMAN" type="Local" value="Sandbox_SemanticLinksPlugin"}%
 %META:PREFERENCE{name="PERM_ID_MD5" title="PERM_ID_MD5" type="Local" value="bce61d48ce67d4cda40c1f0289896a20"}%
 %META:SLPROPERTIES{value="System.SemanticIsPartOf,Example.Property,PreyOf,Eat,IsPartOf"}%

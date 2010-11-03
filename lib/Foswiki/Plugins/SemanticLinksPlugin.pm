@@ -19,8 +19,7 @@ our $SHORTDESCRIPTION =
 'Populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
 
-my %templates;
-my %semanticlinks;
+my $pluginEnabled;
 
 =begin TML
 
@@ -43,301 +42,54 @@ sub initPlugin {
 
         return $warning;
     }
-    %templates = ();
 
-    # Foswiki 1.1
-    if ( defined &Foswiki::Meta::registerMETA ) {
-        Foswiki::Meta::registerMETA(
-            'SLPROPERTIES',
-            require => [qw(value)],
-            allow   => [qw(num)]
-        );
-        Foswiki::Meta::registerMETA(
-            'SLPROPERTY',
-            require => [qw(name values)],
-            allow   => [qw(num)]
-        );
-        Foswiki::Meta::registerMETA(
-            'SLPROPERTYVALUE',
-            require => [qw(name value property)],
-            allow   => [qw(query anchor text)]
-        );
+    $pluginEnabled =
+      Foswiki::Func::getPreferencesFlag('SEMANTICLINKSPLUGIN_ENABLED');
+    if ($pluginEnabled) {
+        require Foswiki::Plugins::SemanticLinksPlugin::Core;
+        %Foswiki::Plugins::SemanticLinksPlugin::Core::templates = ();
+
+        # Foswiki 1.1
+        if ( defined &Foswiki::Meta::registerMETA ) {
+            Foswiki::Meta::registerMETA(
+                'SLPROPERTIES',
+                require => [qw(value)],
+                allow   => [qw(num)]
+            );
+            Foswiki::Meta::registerMETA(
+                'SLPROPERTY',
+                require => [qw(name values)],
+                allow   => [qw(num)]
+            );
+            Foswiki::Meta::registerMETA(
+                'SLPROPERTYVALUE',
+                require => [qw(name value property)],
+                allow   => [qw(query anchor text)]
+            );
+        }
     }
 
     return 1;
 }
 
-=begin TML
----++ preRenderingHandler( $text, \%map )
-   * =$text= - text, with the head, verbatim and pre blocks replaced
-     with placeholders
-   * =\%removed= - reference to a hash that maps the placeholders to
-     the removed blocks.
-
-Handler called immediately before Foswiki syntax structures (such as lists) are
-processed, but after all variables have been expanded. Use this handler to
-process special syntax only recognised by your plugin.
-
-... snip ... refer to EmptyPlugin.pm
-
-=cut
-
 sub preRenderingHandler {
     my ( $text, $pMap ) = @_;
-    my $linkHandler = \&renderLink;
 
-    if ( not defined $pMap ) {
-
-        # SMELL: are we really being called from beforeSaveHandler()?
-        $linkHandler = \&stashLink;
+    if ($pluginEnabled) {
+        Foswiki::Plugins::SemanticLinksPlugin::Core::preRenderingHandler(@_);
     }
-
-    # You can work on $text in place by using the special perl
-    # variable $_[0]. These allow you to operate on $text
-    # as if it was passed by reference; for example:
-    # $_[0] =~ s/SpecialString/my alternative/ge;
-    # Handle [[][] and [[]] links
-    # Change '![[...'  to ' [<nop>[...' to protect from further rendering
-    $_[0] =~ s/(^|\s)\!\[\[/$1\[<nop>\[/gm;
-
-    # Change ' [[$1::$2?$3#$4|$5]] '
-    $_[0] =~
-s/\[\[([^:][^\|\]\n?]+?)::([^\|\]\n?\#]+)(\?[^\|\]\n\#]+)?(\#[^\|\]\n]+)?\|([^\]\n]+)\]\]/&{$linkHandler}( $1, $2, $3, $4, $5 )/ge;
-
-    # Change ' [[$1::$2?$4#$6][$8]] '
-    $_[0] =~
-s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#]+)(\?([^\]\n\#]+))?(\#([^\]\n]+))?\](\[([^\]\n]+)\])?\]/&{$linkHandler}( $1, $2, $4, $6, $8 )/ge;
-
-    # Change ' [[:...' to ' [[... ' so the link will be handled by Foswiki core
-    $_[0] =~ s/(^|\s)[^!]?\[\[:/$1\[\[/gm;
 
     return;
 }
-
-# SMELL: Reproducing Foswiki::Render, but only partially (links have ~500 LOC!)
-# What about protocol:// links? Interwiki:links? email@address.es?
-# TODO: Allow values which aren't links. This would require special meta on
-# the property topic. For now you can cheat by using your own
-# SemanticLinksPlugin::MissingLink template on the property topic.
-sub renderLink {
-    my ( $property, $value, $valuequery, $valueanchor, $text ) = @_;
-    my $templatetxt;
-    my $tmplName = '';
-
-    # SMELL: Surely there is a better way to get the rendered topic's web...
-    my $currentWeb = Foswiki::Func::expandCommonVariables('%WEB%');
-    my ( $propertyweb, $propertytopic ) =
-      Foswiki::Func::normalizeWebTopicName( $currentWeb, $property );
-    my ( $valueweb, $valuetopic ) =
-      Foswiki::Func::normalizeWebTopicName( $currentWeb, $value );
-    $property    ||= '';
-    $value       ||= '';
-    $valuequery  ||= '';
-    $valueanchor ||= '';
-    $text        ||= '';
-
-    #    if (   ( $text eq $Foswiki::cfg{HomeTopicName} )
-    #        && ( $web ne $this->{session}->{webName} ) )
-    #    {
-    #        $linkText = $web;
-    #    }
-    if ($text) {
-        $tmplName = 'WithText';
-    }
-    if ( Foswiki::Func::topicExists( $valueweb, $valuetopic ) ) {
-        $tmplName = 'Link' . $tmplName;
-    }
-    else {
-        $tmplName = 'MissingLink' . $tmplName;
-    }
-
-    $templatetxt = getTemplate( $propertyweb, $propertytopic, $tmplName );
-    $templatetxt =~ s/\$propertyweb\b/$propertyweb/g;
-    $templatetxt =~ s/\$propertytopic\b/$propertytopic/g;
-    $templatetxt =~ s/\$property\b/$property/g;
-    $templatetxt =~ s/\$valueweb\b/$valueweb/g;
-    $templatetxt =~ s/\$valuetopic\b/$valuetopic/g;
-    $templatetxt =~ s/\$value\b/$value/g;
-    $templatetxt =~ s/\$valuequery\b/$valuequery/g;
-    $templatetxt =~ s/\$valueanchor\b/$valueanchor/g;
-    $templatetxt =~ s/\$text\b/$text/g;
-    if ($valuequery) {
-        $templatetxt =~ s/\$valueqquery\b/?$valuequery/g;
-    }
-    else {
-        $templatetxt =~ s/\$valueqquery\b//g;
-    }
-    if ($valuequery) {
-        $templatetxt =~ s/\$valueaanchor\b/#$valueanchor/g;
-    }
-    else {
-        $templatetxt =~ s/\$valueaanchor\b//g;
-    }
-
-    return Foswiki::Func::expandCommonVariables($templatetxt);
-}
-
-sub _getTemplateFromExplicitDef {
-    my ( $property, $tmplName ) = @_;
-
-    return Foswiki::Func::expandTemplate(
-        'SemanticLinksPlugin::' . $property . '::' . $tmplName );
-}
-
-sub _getRequestObject {
-    my $req;
-
-    if ( defined &Foswiki::Func::getRequestObject ) {
-
-        # Foswiki >= 1.1
-        $req = Foswiki::Func::getRequestObject();
-    }
-    else {
-
-        # Foswiki <= 1.0
-        $req = Foswiki::Func::getCgiQuery();
-    }
-
-    return $req;
-}
-
-sub _getTemplateFromPropertyTopic {
-    my ( $web, $topic, $property, $tmplName ) = @_;
-    my $TMPLNAME = _getRequestObject()->param('SEMANTICLINKSPLUGIN_TMPL')
-      || Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_TMPL');
-    my $tmpl;
-
-    if ( Foswiki::Func::topicExists( $web, $topic ) ) {
-        Foswiki::Func::readTemplate( $property, '' );
-        if ($TMPLNAME) {
-            $tmpl = Foswiki::Func::expandTemplate(
-                'SemanticLinksPlugin::' . $TMPLNAME . '::' . $tmplName );
-        }
-        if ( not $tmpl ) {
-            $tmpl = Foswiki::Func::expandTemplate(
-                'SemanticLinksPlugin::' . $tmplName );
-        }
-    }
-
-    return $tmpl;
-}
-
-sub _getTemplateFromSkinPath {
-    my ($tmplName) = @_;
-
-    Foswiki::Func::readTemplate('semanticlinksplugin');
-
-    return Foswiki::Func::expandTemplate( 'SemanticLinksPlugin::' . $tmplName );
-}
-
-# Lazy-load templates, only when we need them.
-sub getTemplate {
-    my ( $propertyweb, $propertytopic, $tmplName ) = @_;
-    my $property = $propertyweb . '.' . $propertytopic;
-    my $tmpl;
-
-    if ( not exists $templates{$property}{$tmplName} ) {
-        $tmpl = _getTemplateFromExplicitDef( $property, $tmplName );
-        if ( not $tmpl ) {
-            $tmpl = _getTemplateFromPropertyTopic( $propertyweb, $propertytopic,
-                $property, $tmplName );
-            if ( not $tmpl ) {
-                $tmpl = _getTemplateFromSkinPath($tmplName);
-            }
-        }
-
-        # Zap the escaped newlines
-        $tmpl =~ s/\\\n//smg;
-        $templates{$property}{$tmplName} = $tmpl;
-    }
-
-    return Foswiki::Func::expandCommonVariables(
-        $templates{$property}{$tmplName} );
-}
-
-=begin TML
-
----++ beforeSaveHandler($text, $topic, $web, $meta )
-   * =$text= - text _with embedded meta-data tags_
-   * =$topic= - the name of the topic in the current CGI query
-   * =$web= - the name of the web in the current CGI query
-   * =$meta= - the metadata of the topic being saved, represented by a Foswiki::Meta object.
-
-   This handler is called each time a topic is saved.
-
-   *NOTE:* meta-data is embedded in =$text= (using %META: tags). If you modify
-   the =$meta= object, then it will override any changes to the meta-data
-   embedded in the text. Modify *either* the META in the text *or* the =$meta=
-   object, never both. You are recommended to modify the =$meta= object rather
-   than the text, as this approach is proof against changes in the embedded
-   text format.
-
-   *Since:* Foswiki::Plugins::VERSION = 2.0
-
-=cut
 
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
-    my @SLPROPERTIES;
-    my @SLPROPERTY;
-    my @SLPROPERTYVALUE;
 
-    %semanticlinks = ();
-
-    # Instead of rendering, linkHandler will be set to stashLink() which
-    # populates the %semanticlinks hash.
-    preRenderingHandler($text);
-
-    # In a perfect world, we'd have query syntax sufficient to avoid needing
-    # the SLPROPERTIES and SLPROPERTY keys at all. For now, SLPROPERTIES can
-    # tell a wiki app what distinct properties are present on a given topic.
-    @SLPROPERTIES = {
-        value => join( ',', keys %semanticlinks ),
-        num   => scalar( keys %semanticlinks )
-    };
-    foreach my $property ( keys %semanticlinks ) {
-
-        # As for SLPROPERTY, this can tell a wiki app what distinct values
-        # there are for a given property.
-        push(
-            @SLPROPERTY,
-            {
-                name   => $property,
-                values => join( ',', keys %{ $semanticlinks{$property} } ),
-                num    => scalar( keys %{ $semanticlinks{$property} } )
-            }
-        );
-        my $valuecount = 1;
-        foreach my $value ( keys %{ $semanticlinks{$property} } ) {
-            push(
-                @SLPROPERTYVALUE,
-                {
-                    name     => $property . '__' . $valuecount,
-                    property => $property,
-                    value    => $value,
-
-                    # query, anchor, text
-                    %{ $semanticlinks{$property}{$value} }
-                }
-            );
-            $valuecount = $valuecount + 1;
-        }
+    if ($pluginEnabled) {
+        Foswiki::Plugins::SemanticLinksPlugin::Core::beforeSaveHandler(@_);
     }
 
-    $topicObject->putAll( 'SLPROPERTIES',    @SLPROPERTIES );
-    $topicObject->putAll( 'SLPROPERTY',      @SLPROPERTY );
-    $topicObject->putAll( 'SLPROPERTYVALUE', @SLPROPERTYVALUE );
-
     return;
-}
-
-sub stashLink {
-    my ( $property, $value, $valuequery, $valueanchor, $text ) = @_;
-
-    $semanticlinks{$property}{$value} =
-      { query => $valuequery, anchor => $valueanchor, text => $text };
-
-    return '';
 }
 
 1;

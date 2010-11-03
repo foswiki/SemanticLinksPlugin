@@ -32,3 +32,7 @@ Preview:
 %TMPL:DEF{"SemanticLinksPlugin::MyRDF::Link"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="MyRDF" />%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLinkWithText"}%%TMPL:P{"LinkWithText"}%%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLink"}%%TMPL:P{"Link"}%%TMPL:END%</verbatim>
+
+<!--
+   * Set SEMANTICLINKSPLUGIN_ENABLED = on
+-->
