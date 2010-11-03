@@ -1,0 +1,22 @@
+%TMPL:DEF{"SemanticLinksPlugin::Link"}%<a \
+    class="foswikiSemanticLinksPlugin" \
+    href="%SCRIPTURLPATH{"view"}%/$valueweb/$valuetopic$valueqquery$valueaanchor" \
+    title="$property">$valuetopic</a>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::LinkWithText"}%<a \
+    class="foswikiSemanticLinksPlugin" \
+    href="%SCRIPTURLPATH{"view"}%/$valueweb/$valuetopic$valueqquery$valueaanchor" \
+    title="$property">$text</a>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MissingLink"}%<span \
+    class="foswikiNewLink foswikiSemanticLinksPlugin">$valueweb.$valuetopic
+        <a \
+            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
+        </a>
+    </span>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MissingLinkWithText"}%<span \
+    class="foswikiNewLink foswikiSemanticLinksPlugin">$text
+        <a \
+            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
+        </a>
+    </span>%TMPL:END%

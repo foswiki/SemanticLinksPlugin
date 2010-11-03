@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<rdf:RDF \
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" \
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" \
+	xmlns:dct="http://purl.org/dc/terms/1.1/" \
+	xmlns:dc="http://purl.org/dc/elements/1.1/" \
+	xmlns:dcq="http://purl.org/dc/qualifiers/1.1/">
+	<rdf:Description rdf:about="%TOPICURL%">
+		<dc:Title><literal>%TOPIC%</literal></dc:Title>
+		<dc:Creator>%SEARCH{"1" type="query" topic="%TOPIC%" nonoise="on" format="$createwikiname"}%</dc:Creator>
+		<dc:Type>Text.Article</dc:Type>
+		<dc:Format>text/html</dc:Format> \
+		%TEXT%
+	</rdf:Description>
+</rdf:RDF>
+
+%TMPL:DEF{"SemanticLinksPlugin::System.SemanticIsPartOf::LinkWithText"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="$text"/>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::System.SemanticIsPartOf::Link"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic"/>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::System.SemanticIsPartOf::MissingLinkWithText"}%%TMPL:P{"LinkWithText"}%%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::System.SemanticIsPartOf::MissingLink"}%%TMPL:P{"Link"}%%TMPL:END%

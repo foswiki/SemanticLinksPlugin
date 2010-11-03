@@ -1,0 +1,34 @@
+%META:TOPICINFO{author="ProjectContributor" date="1288146085" format="1.1" version="1"}%
+%META:TOPICPARENT{name="SemanticLinksPlugin"}%
+---+ SemanticLinksPlugin demonstration of template overrides on property topic
+=SemanticLinksPlugin::LinkWithText= used from [[System.SemanticIsPartOf]]
+<verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][Example label]]</verbatim>
+Preview:
+[[System.SemanticIsPartOf::System.UserDocumentationCategory][Example label]]
+
+%JQREQUIRE{"chili"}%<verbatim class="tml">%TMPL:DEF{"SemanticLinksPlugin::Link"}%<span style="background-color: yellow;">
+    [[%TOPIC%]] [[$property][$propertytopic]] [[$value][$valuetopic]]
+    </span>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::LinkWithText"}%<span style="background-color: yellow;">
+    [[%TOPIC%]] [[$property][$propertytopic]] [[$value][$valuetopic]] <em>$text</em>
+    </span>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MissingLink"}%<span \
+    class="foswikiNewLink foswikiSemanticLinksPlugin" style="background-color: yellow;">$value
+        <a \
+            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
+        </a>
+    </span>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MissingLinkWithText"}%<span \
+    class="foswikiNewLink foswikiSemanticLinksPlugin" style="background-color: yellow;">$text
+        <a \
+            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
+        </a>
+    </span>%TMPL:END%
+</verbatim>
+
+<verbatim class="tml">%TMPL:DEF{"SemanticLinksPlugin::MyRDF::LinkWithText"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="MyRDF comment: $text"/>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MyRDF::Link"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="MyRDF" />%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLinkWithText"}%%TMPL:P{"LinkWithText"}%%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLink"}%%TMPL:P{"Link"}%%TMPL:END%</verbatim>

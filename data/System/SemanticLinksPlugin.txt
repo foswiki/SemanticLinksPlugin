@@ -1,0 +1,216 @@
+%META:TOPICINFO{author="ProjectContributor" date="1288146085" format="1.1" version="1"}%
+%META:TOPICPARENT{name="Plugins"}%
+---+ !SemanticLinks Plugin
+
+%SHORTDESCRIPTION%
+
+%TOC%
+
+---++ PreferenceSettings
+   * For now, the plugin is always enabled. <del>Enable the plugin, usually in your !Main.SitePreferences or WebPreferences:</del>
+   <verbatim class="tml">   * Set SEMANTICLINKSPLUGIN_ENABLED = on</verbatim>
+
+---++ Topic Syntax
+Use the following link syntax to create a special 'semantic' link. Semantic links are rendered using templates (see [[#Templates]]) but also populate special metadata (=META:SLPROPERTY=, see [[#Meta_Data]]).
+%STARTSECTION{"TopicSyntax"}% 
+| *Note*        | *Example*                                                                       | *Preview*                                      | *#*                       | *Should get* |
+| Semantic link | <verbatim class="tml">[[IsPartOf::UserDocumentationCategory]]</verbatim>        | [[IsPartOf::UserDocumentationCategory]]        | <!-- Sem.             --> |              |
+| Semantic link with Foswiki-style link text \
+                | <verbatim class="tml">[[IsPartOf::UserDocumentationCategory][docs]]</verbatim>  | [[IsPartOf::UserDocumentationCategory][docs]]  | <!-- Sem. text        --> |              |
+| Semantic link with SMW-style link text \
+                | <verbatim class="tml">[[IsPartOf::UserDocumentationCategory|docs]]</verbatim>   | [[IsPartOf::UserDocumentationCategory|docs]]   | <!-- Sem-SMW text     --> |              |
+| Non-semantic link \
+                | <verbatim class="tml">[[:IsPartOf::UserDocumentationCategory][docs]]</verbatim> | [[:IsPartOf::UserDocumentationCategory][docs]] | <!-- Std. text        --> |              |
+%ENDSECTION{"TopicSyntax"}%
+<!-- %STARTSECTION{"UnsupportedSyntax"}%<verbatim class="tml">
+| | <verbatim class="tml">![[IsPartOf::UserDocumentationCategory|docs]]</verbatim>       | ![[IsPartOf::UserDocumentationCategory|docs]]           | <!-- ^Sem-SMW text    --> | |
+| | <verbatim class="tml">[<nop>[IsPartOf::UserDocumentationCategory|docs]]</verbatim>   | [<nop>[IsPartOf::UserDocumentationCategory|docs]]       | <!-- Sem-SMW text nop --> | |
+| | <verbatim class="tml">[[:IsPartOf::UserDocumentationCategory|docs]]</verbatim>       | [[:IsPartOf::UserDocumentationCategory|docs]]           | <!-- Std-SMW text     --> | |
+| | <verbatim class="tml">![[:IsPartOf::UserDocumentationCategory|docs]]</verbatim>      | ![[:IsPartOf::SemanticFlie|docs]]                       | <!-- ^Std-SMW text    --> | |
+| | <verbatim class="tml">[<nop>[:IsPartOf::UserDocumentationCategory|docs]]</verbatim>  | [<nop>[:IsPartOf::UserDocumentationCategory|docs]]      | <!-- Std-SMW text nop --> | |
+| | <verbatim class="tml">[[:IsPartOf::UserDocumentationCategory|docs::misc]]</verbatim> | [[:IsPartOf::UserDocumentationCategory|docs::misc]]     | <!-- Std-SMW::text    --> | |
+%ENDSECTION{"UnsupportedSyntax"}%%STARTSECTION{"BoringSyntax"}%
+| | <verbatim class="tml">![[IsPartOf::UserDocumentationCategory]]</verbatim>            | ![[IsPartOf::UserDocumentationCategory]]                | <!-- ^Sem.             --> | |
+| | <verbatim class="tml">[<nop>[IsPartOf::UserDocumentationCategory]]</verbatim>        | [<nop>[IsPartOf::UserDocumentationCategory]]            | <!-- Sem. nop          --> | |
+| | <verbatim class="tml">![[IsPartOf::UserDocumentationCategory][docs]]</verbatim>      | ![[IsPartOf::UserDocumentationCategory][docs]]          | <!-- ^Sem. text        --> | |
+| | <verbatim class="tml">[<nop>[IsPartOf::UserDocumentationCategory][docs]]</verbatim>  | [<nop>[IsPartOf::UserDocumentationCategory][docs]]      | <!-- Sem. text nop     --> | |
+| | <verbatim class="tml">[[IsPartOf::UserDocumentationCategory][docs::misc]]</verbatim> | [[IsPartOf::UserDocumentationCategory][docs::misc]]     | <!-- Sem::text         --> | |
+| | <verbatim class="tml">[[IsPartOf::UserDocumentationCategory|docs::misc]]</verbatim>  | [[IsPartOf::UserDocumentationCategory|docs::misc]]      | <!-- Sem-SMW::text     --> | |
+| | <verbatim class="tml">![[:IsPartOf::UserDocumentationCategory]]</verbatim>           | ![[:IsPartOf::UserDocumentationCategory]]               | <!-- ^Std.             --> | |
+| | <verbatim class="tml">[<nop>[:IsPartOf::UserDocumentationCategory]]</verbatim>       | [<nop>[:IsPartOf::UserDocumentationCategory]]           | <!-- Std. nop          --> | |
+| | <verbatim class="tml">![[:IsPartOf::UserDocumentationCategory][docs]]</verbatim>     | ![[:IsPartOf::UserDocumentationCategory][docs]]         | <!-- ^Std. text        --> | |
+| | <verbatim class="tml">[<nop>[:IsPartOf::UserDocumentationCategory][docs]]</verbatim> | [<nop>[:IsPartOf::UserDocumentationCategory][docs]]     | <!-- Std. text nop     --> | |
+| | <verbatim class="tml">[[:IsPartOf][docs::misc]]</verbatim>                           | [[:IsPartOf][docs::misc]]                               | <!-- Std::text         --> | |
+</verbatim>%ENDSECTION{"BoringSyntax"}% -->
+
+---++ Templates
+When rendering a link, %TOPIC% travels a slightly different skin path to that of the [[SkinTemplates#Finding_Skin_Templates][standard templates path]]. The path used, and the name of the DEFs that are loaded are based on the _property_ name used in the semantic link. The order looks like this:
+   1 First, use the [[SkinTemplates#Finding_Skin_Templates][standard skin path]] to get DEFs named in the form of =SemanticLinksPlugin::PROPERTYNAME::Link=. This gives skin templates a chance to target only links using a specific property name. You might do this if your RDF needs to use multiple ontologies, or you can't easily transform property names consistently into RDF.
+   1 If the property name matches the name of a topic that exists, load template directives from it and try DEFs named of the form:
+      1 =SemanticLinksPlugin::%<nop>SEMANTICLINKSPLUGIN_TMPL%::Link=, where =SEMANTICLINKSPLUGIN_TMPL= is either a [[VarURLPARAM][URL parameter]] or [[PreferenceSettings][PreferenceSetting]].
+      1 =SemanticLinksPlugin::Link=
+   1 Finally, use the [[SkinTemplates#Finding_Skin_Templates][standard skin path]] to find DEFs named in the form of =SemanticLinksPlugin::Link=. Unless you override them with your own skin or AutoViewTemplatePlugin templates, these will come from =templates/semanticlinksplugin.tmpl=.
+
+---+++ DEFs
+| *TMPL:DEF{...}*                             | *Description*                                                            |
+| =SemanticLinksPlugin::Link=                 | Build markup for an =[<nop>[ordinary::link]]=                            |
+| =SemanticLinksPlugin::LinkWithtext=         | Build markup for a =[<nop>[link::with][a text link]]=                         |
+| =SemanticLinksPlugin::MissingLink=          | Build markup for an =[<nop>[ordinary::link]]= to a non-existant topic    |
+| =SemanticLinksPlugin::MissingLinkWithtext=  | Build markup for a =[<nop>[link::with][a text link]]= to a non-existant topic |
+
+---+++ Tokens
+Given a link of the form:
+<verbatim class="tml">[[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]]</verbatim>
+preview: [[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]], these tokens apply:
+
+| *Token*          | *Example*                         | *Description*                  |
+| =$text=          | Example text                      | text part of the link          |
+| =$property=      | !Example.Property                 | Property part (LHS of '::')    |
+| =$propertyweb=   | !Example                          | Web part of the property       |
+| =$propertytopic= | !Property                         | Topic part of the property     |
+| =$value=         | !System.UserDocumentationCategory?query=part#AnchorPart \
+                                                       | Value part (RHS of '::')       |
+| =$valueweb=      | !System                           | Web part of the value          |
+| =$valuetopic=    | !UserDocumentationCategory        | Topic part of the value        |
+| =$valuequery=    | query=part                        | Query part of the value        |
+| =$valueqquery=   | ?query=part                       | Query part, prefixed with '?'  |
+| =$valueanchor=   | !AnchorPart                       | Anchor part of the value       |
+| =$valueaanchor=  | #AnchorPart                       | Anchor part, prefixed with '#' |
+
+---+++ Example: Default DEFs overridden from property topic
+=SemanticLinksPlugin::LinkWithText= used from the [[System.SemanticIsPartOf]] topic
+<verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][Example text]]</verbatim>
+Preview:
+   * [[System.SemanticIsPartOf::System.UserDocumentationCategory][Example text]]
+
+---+++ Example: RDF output using named template from property topic
+=SemanticLinksPlugin::MyRDF::LinkWithText= used from the property topic
+<!-- %STARTSECTION{"myrdfdemo"}%<?xml version="1.0"?>
+<rdf:RDF \
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" \
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" \
+	xmlns:dct="http://purl.org/dc/terms/1.1/" \
+	xmlns:dc="http://purl.org/dc/elements/1.1/" \
+	xmlns:dcq="http://purl.org/dc/qualifiers/1.1/">
+	<rdf:Description rdf:about="%TOPICURL%">
+		<dc:Title><literal>%TOPIC%</literal></dc:Title>
+		<dc:Creator>%SEARCH{"1" type="query" topic="%TOPIC%" nonoise="on" format="$createwikiname"}%</dc:Creator>
+		<dc:Type>Text.Article</dc:Type>
+		<dc:Format>text/html</dc:Format>
+		[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]
+	</rdf:Description>
+</rdf:RDF>%ENDSECTION{"myrdfdemo"}% -->
+<verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]</verbatim>
+Previews:
+   * Best viewed in Firefox: [[%TOPIC%?contenttype=application/xml+rdf;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][Click to see RDF view]], or
+   * Alternate: [[%TOPIC%?contenttype=text/plain;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][Click to see RDF in plain-text]]
+
+---+++ Example: RDF output using overrides from a custom skin
+=SemanticLinksPlugin::System.SemanticIsPartOf::LinkWithText= used from the =templates/view.semanticlinksplugindcdemo.tmpl= file
+<!-- %STARTSECTION{"dcdemo"}%[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]%ENDSECTION{"dcdemo"}% -->
+<verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]</verbatim>
+Previews:
+   * Best viewed in Firefox: [[%TOPIC%?contenttype=application/xml+rdf;skin=semanticlinksplugindcdemo;section=dcdemo][Click to see RDF view]], or
+   * Alternate: [[%TOPIC%?contenttype=text/plain;skin=semanticlinksplugindcdemo;section=dcdemo][Click to see RDF in plain-text]]
+If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], it should be able to plot a graph with the generated RDF similar to:
+<img alt="RDF graph of properties for !%TOPIC% topic" src="%ATTACHURLPATH%/dcdemo.png" width="941px" height="347px"/>
+
+---++ Meta Data
+<verbatim class="tml">Frogs [[Eat::Flies][eat flies]], [[Eat::Mosquitos][mosquitos]]
+and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
+<verbatim class="tml">
+ %META:SLPROPERTIES{                                      value="Eat,PreyOf"                    }%
+ %META:SLPROPERTY{     name="Eat"                         values="Flies,Mosquitos" num="2"}%
+ %META:SLPROPERTYVALUE{name="Eat__1"    property="Eat"    value="Flies"                         }%
+ %META:SLPROPERTYVALUE{name="Eat__2"    property="Eat"    value="Mosquitos"                     }%
+ %META:SLPROPERTY{     name="PreyOf"                      values="Snakes"          num="1"}%
+ %META:SLPROPERTYVALUE{name="PreyOf__1" property="PreyOf" value="Snakes"                        }%</verbatim>
+
+A complete list of properties on a given topic may be obtained using:
+<verbatim class="tml">%QUERY{"META:SLPROPERTIES.value"}%</verbatim>
+*Preview:* %QUERY{"META:SLPROPERTIES.value"}%
+
+A complete list of values for a given property may be obtained using:
+<verbatim class="tml">%QUERY{"META:SLPROPERTYVALUE.value"}%</verbatim>
+*Preview:* %QUERY{"'%TOPIC%'/META:SLPROPERTYVALUE[name~'*']" type="json"}%
+----
+%QUERY{"META:SLPROPERTYVALUE.name"}%
+----
+<verbatim class="tml">%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</verbatim>
+*Preview:* %QUERY{"META:SLPROPERTY[name='Eat'].values"}%
+
+And perhaps all values of all properties on the current topic could be rendered using:
+<verbatim class="tml">%FORMAT{
+  "%QUERY{"META:SLPROPERTIES.value"}%"
+  type="string"
+  format="$percentFORMAT{
+    \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
+    type=\"topic\"
+    header=\"| *Property* | *Value*                                  | *Author*                                             |\"
+    format=\"| $item      | [[$dollarweb.$dollartopic][$dollartopic] | [[$dollarcreatewikiusername][$dollarcreatewikiname]] |\"
+  }$percent"
+}%</verbatim>
+
+*Preview:*
+%FORMAT{
+  "%QUERY{"META:SLPROPERTIES.value"}%"
+  type="string"
+  format="$percentFORMAT{
+    \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
+    type=\"topic\"
+    header=\"| *Property* | *Value*                                  | *Author*                                             |\"
+    format=\"| $item      | [[$dollarweb.$dollartopic][$dollartopic] | [[$dollarcreatewikiusername][$dollarcreatewikiname]] |\"
+  }$percent"
+}%
+
+<!--%JQREQUIRE{"chili"}%
+One line description, required for extensions repository catalog.
+   * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
+-->
+
+---++ TODO
+   * Proper example (or new macro) to dump semantic links on a given topic in a more controlled way ( =%<nop>TEXT%= isn't good enough... )
+   * Split the plugin core into a separate module which should be lazy-loaded to improve request times on plain CGI environments
+   * The example templates are kind of lame...
+   * Ship with an interesting set of example topics
+   * Ship an example that abuses the templating feature to do interesting linked-data ajax things with semantic links, Eg. =[<nop>[ISBN::2134567]]= could have a template in the ISBN property topic which renders some specially styled =&lt;span&gt;= tag to enable some jquery code to go out and resolve the ISBN into publisher, author, book title... in the browser.
+
+---++ Known Issues
+   * For now, the plugin is always enabled
+   * For now, values are expected to be internal links to other topics
+   * The [[#Meta_Data]] examples aren't rendering VarQUERY or VarFORMAT examples properly; core bug? Wrong syntax?
+   * Sanitisation of property/value?
+   * No attempt to support Semantic MediaWiki's ={{#set ....}}= syntax at this point
+   * =[<nop>[Foo::Bar|label]]= isn't understood by WysiwygPlugin, so the syntax breaks TML tables
+
+---++ Installation
+
+%$INSTALL_INSTRUCTIONS%
+
+---++ Plugin Info
+
+|  Author: | Foswiki:Main.PaulHarvey |
+|  Copyright: | © 2010, [[http://www.taxonomy.org.au][Taxonomy Research & Information Network]], Foswiki Contributors |
+|  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+|  Release: | %$RELEASE% |
+|  Version: | %$VERSION% |
+|  Change History:     | <!-- versions below in reverse order --> |
+|  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
+|  Home: | http://foswiki.org/Extensions/%TOPIC% |
+|  Support: | http://foswiki.org/Support/%TOPIC% |
+
+%META:SLPROPERTYVALUE{name="System.SemanticIsPartOf__1" anchor="" property="System.SemanticIsPartOf" query="" text="User documentation" value="System.UserDocumentationCategory"}%
+%META:SLPROPERTYVALUE{name="Example.Property__1" anchor="AnchorPart" property="Example.Property" query="query=part" text="Example text" value="UserDocumentationCategory"}%
+%META:SLPROPERTYVALUE{name="PreyOf__1" anchor="" property="PreyOf" query="" text="preyed on by snakes" value="Snakes"}%
+%META:SLPROPERTYVALUE{name="Eat__1" anchor="" property="Eat" query="" text="mosquitos" value="Mosquitos"}%
+%META:SLPROPERTYVALUE{name="Eat__2" anchor="" property="Eat" query="" text="eat flies" value="Flies"}%
+%META:SLPROPERTYVALUE{name="IsPartOf__1" anchor="" property="IsPartOf" query="" text="docs::misc" value="UserDocumentationCategory"}%
+%META:SLPROPERTY{name="System.SemanticIsPartOf" numvalues="1" values="System.UserDocumentationCategory"}%
+%META:SLPROPERTY{name="Example.Property" numvalues="1" values="UserDocumentationCategory"}%
+%META:SLPROPERTY{name="PreyOf" numvalues="1" values="Snakes"}%
+%META:SLPROPERTY{name="Eat" numvalues="2" values="Mosquitos,Flies"}%
+%META:SLPROPERTY{name="IsPartOf" numvalues="1" values="UserDocumentationCategory"}%
+%META:PREFERENCE{name="PERM_ID_HUMAN" title="PERM_ID_HUMAN" type="Local" value="Sandbox_SemanticLinksPlugin"}%
+%META:PREFERENCE{name="PERM_ID_MD5" title="PERM_ID_MD5" type="Local" value="bce61d48ce67d4cda40c1f0289896a20"}%
+%META:SLPROPERTIES{value="System.SemanticIsPartOf,Example.Property,PreyOf,Eat,IsPartOf"}%
+

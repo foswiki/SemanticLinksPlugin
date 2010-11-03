@@ -1,0 +1,6 @@
+data/System/SemanticLinksPlugin.txt 0644 Plugin doc page
+data/System/SemanticIsPartOf.txt 0644 Plugin demo page
+pub/System/SemanticLinksPlugin/dcdemo.png 0644 Plugin doc diagram
+lib/Foswiki/Plugins/SemanticLinksPlugin.pm 0644 Plugin Perl module
+templates/semanticlinksplugin.tmpl 0644 Plugin template
+templates/view.semanticlinksplugindcdemo.tmpl 0644 Plugin demo template
