@@ -130,26 +130,28 @@ and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
 
 A complete list of properties on a given topic may be obtained using:
 <verbatim class="tml">%QUERY{"META:SLPROPERTIES.value"}%</verbatim>
-*Preview:* %QUERY{"META:SLPROPERTIES.value"}%
+Preview:
+<blockquote>%QUERY{"META:SLPROPERTIES.value"}%</blockquote>
 
 A complete list of values for a given property may be obtained using:
-<verbatim class="tml">%QUERY{"META:SLPROPERTYVALUE.value"}%</verbatim>
-*Preview:* %QUERY{"'%TOPIC%'/META:SLPROPERTYVALUE[name~'*']" type="json"}%
-----
-%QUERY{"META:SLPROPERTYVALUE.name"}%
-----
-<verbatim class="tml">%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</verbatim>
-*Preview:* %QUERY{"META:SLPROPERTY[name='Eat'].values"}%
+<verbatim class="tml">%QUERY{"META:SLPROPERTYVALUE[property='Eat'].value"}%</verbatim>
+Preview:
+<blockquote>%QUERY{"META:SLPROPERTYVALUE[property='Eat'].value"}%</blockquote>
 
-And perhaps all values of all properties on the current topic could be rendered using:
+Or alternatively:
+<verbatim class="tml">%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</verbatim>
+Preview:
+<blockquote>%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</blockquote>
+
+And all values of all properties on the current topic could be rendered using:
 <verbatim class="tml">%FORMAT{
   "%QUERY{"META:SLPROPERTIES.value"}%"
   type="string"
   format="$percentFORMAT{
     \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
     type=\"topic\"
-    header=\"| *Property* | *Value*                                  | *Author*                                             |\"
-    format=\"| $item      | [[$dollarweb.$dollartopic][$dollartopic] | [[$dollarcreatewikiusername][$dollarcreatewikiname]] |\"
+    header=\"   * $item$n\"
+    format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
   }$percent"
 }%</verbatim>
 
@@ -160,8 +162,8 @@ And perhaps all values of all properties on the current topic could be rendered 
   format="$percentFORMAT{
     \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
     type=\"topic\"
-    header=\"| *Property* | *Value*                                  | *Author*                                             |\"
-    format=\"| $item      | [[$dollarweb.$dollartopic][$dollartopic] | [[$dollarcreatewikiusername][$dollarcreatewikiname]] |\"
+    header=\"   * $item$n\"
+    format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
   }$percent"
 }%
 
@@ -171,14 +173,12 @@ One line description, required for extensions repository catalog.
 -->
 
 ---++ TODO
-   * Proper example (or new macro) to dump semantic links on a given topic in a more controlled way ( =%<nop>TEXT%= isn't good enough... )
    * The example templates are kind of lame...
    * Ship with an interesting set of example topics
    * Ship an example that abuses the templating feature to do interesting linked-data ajax things with semantic links, Eg. =[<nop>[ISBN::2134567]]= could have a template in the ISBN property topic which renders some specially styled =&lt;span&gt;= tag to enable some jquery code to go out and resolve the ISBN into publisher, author, book title... in the browser.
 
 ---++ Known Issues
    * For now, values are expected to be internal links to other topics
-   * The [[#Meta_Data]] examples aren't rendering VarQUERY or VarFORMAT examples properly; core bug? Wrong syntax?
    * Sanitisation of property/value?
    * No attempt to support Semantic MediaWiki's ={{#set ....}}= syntax at this point
    * =[<nop>[Foo::Bar|label]]= isn't understood by WysiwygPlugin, so the syntax breaks TML tables
@@ -195,6 +195,7 @@ One line description, required for extensions repository catalog.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  04 Nov 2010 (1.0.1) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
