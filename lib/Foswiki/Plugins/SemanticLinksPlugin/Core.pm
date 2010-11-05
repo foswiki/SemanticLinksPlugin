@@ -15,6 +15,10 @@ use Foswiki::Func ();    # The plugins API
 my %templates;
 my %semanticlinks;
 
+sub init {
+    %templates = ();
+}
+
 =begin TML
 ---++ preRenderingHandler( $text, \%map )
    * =$text= - text, with the head, verbatim and pre blocks replaced
@@ -150,16 +154,14 @@ sub _getRequestObject {
 }
 
 sub _getTemplateFromPropertyTopic {
-    my ( $web, $topic, $property, $tmplName ) = @_;
-    my $TMPLNAME = _getRequestObject()->param('SEMANTICLINKSPLUGIN_TMPL')
-      || Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_TMPL');
+    my ( $web, $topic, $tmplName, $custTMPL ) = @_;
     my $tmpl;
 
     if ( Foswiki::Func::topicExists( $web, $topic ) ) {
-        Foswiki::Func::readTemplate( $property, '' );
-        if ($TMPLNAME) {
+        Foswiki::Func::readTemplate( $web . '.' . $topic, '' );
+        if ($custTMPL) {
             $tmpl = Foswiki::Func::expandTemplate(
-                'SemanticLinksPlugin::' . $TMPLNAME . '::' . $tmplName );
+                'SemanticLinksPlugin::' . $custTMPL . '::' . $tmplName );
         }
         if ( not $tmpl ) {
             $tmpl = Foswiki::Func::expandTemplate(
@@ -182,13 +184,17 @@ sub _getTemplateFromSkinPath {
 sub getTemplate {
     my ( $propertyweb, $propertytopic, $tmplName ) = @_;
     my $property = $propertyweb . '.' . $propertytopic;
+    my $custTMPL =
+         _getRequestObject()->param('SEMANTICLINKSPLUGIN_TMPL')
+      || Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_TMPL')
+      || 0;
     my $tmpl;
 
-    if ( not exists $templates{$property}{$tmplName} ) {
+    if ( not $templates{$property}{$tmplName}{$custTMPL} ) {
         $tmpl = _getTemplateFromExplicitDef( $property, $tmplName );
         if ( not $tmpl ) {
             $tmpl = _getTemplateFromPropertyTopic( $propertyweb, $propertytopic,
-                $property, $tmplName );
+                $tmplName, $custTMPL );
             if ( not $tmpl ) {
                 $tmpl = _getTemplateFromSkinPath($tmplName);
             }
@@ -196,11 +202,11 @@ sub getTemplate {
 
         # Zap the escaped newlines
         $tmpl =~ s/\\\n//smg;
-        $templates{$property}{$tmplName} = $tmpl;
+        $templates{$property}{$tmplName}{$custTMPL} = $tmpl;
     }
 
     return Foswiki::Func::expandCommonVariables(
-        $templates{$property}{$tmplName} );
+        $templates{$property}{$tmplName}{$custTMPL} );
 }
 
 =begin TML

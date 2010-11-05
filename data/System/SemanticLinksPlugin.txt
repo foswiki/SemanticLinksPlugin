@@ -63,8 +63,9 @@ When rendering a link, %TOPIC% travels a slightly different skin path to that of
 ---+++ Tokens
 Given a link of the form:
 <verbatim class="tml">[[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]]</verbatim>
-preview: [[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]], these tokens apply:
-
+Preview:
+<blockquote>[[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]]</blockquote>
+These tokens apply:
 | *Token*          | *Example*                         | *Description*                  |
 | =$text=          | Example text                      | text part of the link          |
 | =$property=      | !Example.Property                 | Property part (LHS of '::')    |
@@ -83,7 +84,7 @@ preview: [[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Ex
 =SemanticLinksPlugin::LinkWithText= used from the [[System.SemanticIsPartOf]] topic
 <verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][Example text]]</verbatim>
 Preview:
-   * [[System.SemanticIsPartOf::System.UserDocumentationCategory][Example text]]
+<blockquote>[[System.SemanticIsPartOf::System.UserDocumentationCategory][Example text]]</blockquote>
 
 ---+++ Example: RDF output using named template from property topic
 =SemanticLinksPlugin::MyRDF::LinkWithText= used from the property topic
@@ -104,16 +105,20 @@ Preview:
 </rdf:RDF>%ENDSECTION{"myrdfdemo"}% -->
 <verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]</verbatim>
 Previews:
-   * Best viewed in Firefox: [[%TOPIC%?contenttype=application/xml+rdf;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][Click to see RDF view]], or
-   * Alternate: [[%TOPIC%?contenttype=text/plain;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][Click to see RDF in plain-text]]
+   * Best viewed in Firefox:
+      * [[%TOPIC%?contenttype=application/xml+rdf;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][_Click to see RDF view_]]
+   * Alternate:
+      * [[%TOPIC%?contenttype=text/plain;skin=text;SEMANTICLINKSPLUGIN_TMPL=MyRDF;section=myrdfdemo][_Click to see RDF in plain-text_]]
 
 ---+++ Example: RDF output using overrides from a custom skin
 =SemanticLinksPlugin::System.SemanticIsPartOf::LinkWithText= used from the =templates/view.semanticlinksplugindcdemo.tmpl= file
 <!-- %STARTSECTION{"dcdemo"}%[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]%ENDSECTION{"dcdemo"}% -->
 <verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]</verbatim>
 Previews:
-   * Best viewed in Firefox: [[%TOPIC%?contenttype=application/xml+rdf;skin=semanticlinksplugindcdemo;section=dcdemo][Click to see RDF view]], or
-   * Alternate: [[%TOPIC%?contenttype=text/plain;skin=semanticlinksplugindcdemo;section=dcdemo][Click to see RDF in plain-text]]
+   * Best viewed in Firefox:
+      * [[%TOPIC%?contenttype=application/xml+rdf;skin=semanticlinksplugindcdemo;section=dcdemo][_Click to see RDF view_]]
+   * Alternate:
+      * [[%TOPIC%?contenttype=text/plain;skin=semanticlinksplugindcdemo;section=dcdemo][_Click to see RDF in plain-text_]]
 If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], it should be able to plot a graph with the generated RDF similar to:
 <img alt="RDF graph of properties for !%TOPIC% topic" src="%ATTACHURLPATH%/dcdemo.png" width="941px" height="347px"/>
 
@@ -195,7 +200,7 @@ One line description, required for extensions repository catalog.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
-|  05 Nov 2010 (1.0.2) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples |
+|  05 Nov 2010 (1.0.3) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples; fix template bug |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |

@@ -14,7 +14,7 @@ use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
 our $VERSION = '$Rev$ (2010-11-05)';
-our $RELEASE = '1.0.2';
+our $RELEASE = '1.0.3';
 our $SHORTDESCRIPTION =
 'Populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
@@ -47,7 +47,7 @@ sub initPlugin {
       Foswiki::Func::getPreferencesFlag('SEMANTICLINKSPLUGIN_ENABLED');
     if ($pluginEnabled) {
         require Foswiki::Plugins::SemanticLinksPlugin::Core;
-        %Foswiki::Plugins::SemanticLinksPlugin::Core::templates = ();
+        Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
         # Foswiki 1.1
         if ( defined &Foswiki::Meta::registerMETA ) {
