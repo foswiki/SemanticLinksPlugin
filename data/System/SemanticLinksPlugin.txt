@@ -129,26 +129,26 @@ and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
  %META:SLPROPERTYVALUE{name="PreyOf__1" property="PreyOf" value="Snakes"                        }%</verbatim>
 
 A complete list of properties on a given topic may be obtained using:
-<verbatim class="tml">%QUERY{"META:SLPROPERTIES.value"}%</verbatim>
+<verbatim class="tml">%QUERY{"slproperties.value"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"META:SLPROPERTIES.value"}%</blockquote>
+<blockquote>%QUERY{"slproperties.value"}%</blockquote>
 
 A complete list of values for a given property may be obtained using:
-<verbatim class="tml">%QUERY{"META:SLPROPERTYVALUE[property='Eat'].value"}%</verbatim>
+<verbatim class="tml">%QUERY{"slpropertyvalue[property='Eat'].value"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"META:SLPROPERTYVALUE[property='Eat'].value"}%</blockquote>
+<blockquote>%QUERY{"slpropertyvalue[property='Eat'].value"}%</blockquote>
 
 Or alternatively:
-<verbatim class="tml">%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</verbatim>
+<verbatim class="tml">%QUERY{"slproperty[name='Eat'].values"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"META:SLPROPERTY[name='Eat'].values"}%</blockquote>
+<blockquote>%QUERY{"slproperty[name='Eat'].values"}%</blockquote>
 
 And all values of all properties on the current topic could be rendered using:
 <verbatim class="tml">%FORMAT{
-  "%QUERY{"META:SLPROPERTIES.value"}%"
+  "%QUERY{"slproperties.value"}%"
   type="string"
   format="$percentFORMAT{
-    \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
+    \"$percentQUERY{\"slproperty[name='$item'].values\"}$percent\"
     type=\"topic\"
     header=\"   * $item$n\"
     format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
@@ -157,10 +157,10 @@ And all values of all properties on the current topic could be rendered using:
 
 *Preview:*
 %FORMAT{
-  "%QUERY{"META:SLPROPERTIES.value"}%"
+  "%QUERY{"slproperties.value"}%"
   type="string"
   format="$percentFORMAT{
-    \"$percentQUERY{\"META:SLPROPERTY[name='$item'].values\"}$percent\"
+    \"$percentQUERY{\"slproperty[name='$item'].values\"}$percent\"
     type=\"topic\"
     header=\"   * $item$n\"
     format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
@@ -195,7 +195,7 @@ One line description, required for extensions repository catalog.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
-|  04 Nov 2010 (1.0.1) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples |
+|  05 Nov 2010 (1.0.2) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
