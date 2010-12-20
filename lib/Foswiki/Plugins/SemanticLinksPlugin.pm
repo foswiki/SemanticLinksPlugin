@@ -45,7 +45,7 @@ sub initPlugin {
 
     $pluginEnabled =
       Foswiki::Func::getPreferencesFlag('SEMANTICLINKSPLUGIN_ENABLED');
-    if ($pluginEnabled) {
+#    if ($pluginEnabled) {
         require Foswiki::Plugins::SemanticLinksPlugin::Core;
         Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
@@ -72,7 +72,7 @@ sub initPlugin {
                 allow   => [qw(query anchor text)]
             );
         }
-    }
+#    }
 
     return 1;
 }
