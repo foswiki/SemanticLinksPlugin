@@ -19,7 +19,7 @@ our $SHORTDESCRIPTION =
 'Populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
 
-my $pluginEnabled;
+my $renderingEnabled;
 
 =begin TML
 
@@ -43,36 +43,37 @@ sub initPlugin {
         return $warning;
     }
 
-    $pluginEnabled =
-      Foswiki::Func::getPreferencesFlag('SEMANTICLINKSPLUGIN_ENABLED');
-#    if ($pluginEnabled) {
-        require Foswiki::Plugins::SemanticLinksPlugin::Core;
-        Foswiki::Plugins::SemanticLinksPlugin::Core::init();
+    $renderingEnabled =
+      Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING');
+    if ($renderingEnabled eq 'off') {
+		$renderingEnabled = 0;
+	}
+	require Foswiki::Plugins::SemanticLinksPlugin::Core;
+	Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
-        # Foswiki 1.1
-        if ( defined &Foswiki::Meta::registerMETA ) {
-            Foswiki::Meta::registerMETA(
-                'SLPROPERTIES',
-                alias   => 'slproperties',
-                require => [qw(value)],
-                allow   => [qw(num)]
-            );
-            Foswiki::Meta::registerMETA(
-                'SLPROPERTY',
-                alias   => 'slproperty',
-                many    => 1,
-                require => [qw(name values)],
-                allow   => [qw(num)]
-            );
-            Foswiki::Meta::registerMETA(
-                'SLPROPERTYVALUE',
-                alias   => 'slpropertyvalue',
-                many    => 1,
-                require => [qw(name value property)],
-                allow   => [qw(query anchor text)]
-            );
-        }
-#    }
+	# Foswiki 1.1
+	if ( defined &Foswiki::Meta::registerMETA ) {
+		Foswiki::Meta::registerMETA(
+			'SLPROPERTIES',
+			alias   => 'slproperties',
+			require => [qw(value)],
+			allow   => [qw(num)]
+		);
+		Foswiki::Meta::registerMETA(
+			'SLPROPERTY',
+			alias   => 'slproperty',
+			many    => 1,
+			require => [qw(name values)],
+			allow   => [qw(num)]
+		);
+		Foswiki::Meta::registerMETA(
+			'SLPROPERTYVALUE',
+			alias   => 'slpropertyvalue',
+			many    => 1,
+			require => [qw(name value property)],
+			allow   => [qw(query anchor text)]
+		);
+	}
 
     return 1;
 }
@@ -80,7 +81,7 @@ sub initPlugin {
 sub preRenderingHandler {
     my ( $text, $pMap ) = @_;
 
-    if ($pluginEnabled) {
+    if ($renderingEnabled) {
         Foswiki::Plugins::SemanticLinksPlugin::Core::preRenderingHandler(@_);
     }
 
@@ -90,7 +91,7 @@ sub preRenderingHandler {
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
-    if ($pluginEnabled) {
+    if ($renderingEnabled) {
         Foswiki::Plugins::SemanticLinksPlugin::Core::beforeSaveHandler(@_);
     }
 

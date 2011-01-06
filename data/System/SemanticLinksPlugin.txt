@@ -7,10 +7,10 @@
 %TOC%
 
 ---++ PreferenceSettings
-Enable the plugin, usually in your !Main.SitePreferences or the WebPreferences topic for the web where it is needed:
-   <verbatim class="tml">
-   * Set SEMANTICLINKSPLUGIN_ENABLED = on
-   </verbatim>
+Rendering of links is enabled by default, but can add unwanted CPU overhead. You may wish to disable the rendering by default (in Main.SitePreferences), and then only enable on webs where it's needed in these web's WebPreferences topics.
+<verbatim class="tml">
+   * Set SEMANTICLINKSPLUGIN_RENDERING = on
+</verbatim>
 
 ---++ Topic Syntax
 Use the following link syntax to create a special 'semantic' link. Semantic links are rendered using templates (see [[#Templates]]) but also populate special metadata (=META:SLPROPERTY=, see [[#Meta_Data]]).
@@ -200,6 +200,7 @@ One line description, required for extensions repository catalog.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  06 Jan 2010 (1.1.0) | Foswikitask:Item9961 - Rename SEMANTICLINKSPLUGIN_ENABLED to SEMANTICLINKSPLUGIN_RENDER; default to on |
 |  05 Nov 2010 (1.0.3) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples; fix template bug |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
