@@ -43,37 +43,44 @@ sub initPlugin {
         return $warning;
     }
 
+    # No getPreferencesFlag() because I couldn't provide a positive default
     $renderingEnabled =
       Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING');
-    if ($renderingEnabled eq 'off') {
-		$renderingEnabled = 0;
-	}
-	require Foswiki::Plugins::SemanticLinksPlugin::Core;
-	Foswiki::Plugins::SemanticLinksPlugin::Core::init();
+    if (   not defined $renderingEnabled
+        or $renderingEnabled eq 'on'
+        or $renderingEnabeld eq 1 )
+    {
+        $renderingEnabled = 1;
+    }
+    else {
+        $renderingEnabled = 0;
+    }
+    require Foswiki::Plugins::SemanticLinksPlugin::Core;
+    Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
-	# Foswiki 1.1
-	if ( defined &Foswiki::Meta::registerMETA ) {
-		Foswiki::Meta::registerMETA(
-			'SLPROPERTIES',
-			alias   => 'slproperties',
-			require => [qw(value)],
-			allow   => [qw(num)]
-		);
-		Foswiki::Meta::registerMETA(
-			'SLPROPERTY',
-			alias   => 'slproperty',
-			many    => 1,
-			require => [qw(name values)],
-			allow   => [qw(num)]
-		);
-		Foswiki::Meta::registerMETA(
-			'SLPROPERTYVALUE',
-			alias   => 'slpropertyvalue',
-			many    => 1,
-			require => [qw(name value property)],
-			allow   => [qw(query anchor text)]
-		);
-	}
+    # Foswiki 1.1
+    if ( defined &Foswiki::Meta::registerMETA ) {
+        Foswiki::Meta::registerMETA(
+            'SLPROPERTIES',
+            alias   => 'slproperties',
+            require => [qw(value)],
+            allow   => [qw(num)]
+        );
+        Foswiki::Meta::registerMETA(
+            'SLPROPERTY',
+            alias   => 'slproperty',
+            many    => 1,
+            require => [qw(name values)],
+            allow   => [qw(num)]
+        );
+        Foswiki::Meta::registerMETA(
+            'SLPROPERTYVALUE',
+            alias   => 'slpropertyvalue',
+            many    => 1,
+            require => [qw(name value property)],
+            allow   => [qw(query anchor text)]
+        );
+    }
 
     return 1;
 }
