@@ -48,7 +48,7 @@ sub initPlugin {
       Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING');
     if (   not defined $renderingEnabled
         or $renderingEnabled eq 'on'
-        or $renderingEnabeld eq 1 )
+        or $renderingEnabled eq 1 )
     {
         $renderingEnabled = 1;
     }
