@@ -42,19 +42,8 @@ sub initPlugin {
 
         return $warning;
     }
-
-    # No getPreferencesFlag() because I couldn't provide a positive default
-    $renderingEnabled =
-      Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING');
-    if (   not defined $renderingEnabled
-        or $renderingEnabled eq 'on'
-        or $renderingEnabled eq 1 )
-    {
-        $renderingEnabled = 1;
-    }
-    else {
-        $renderingEnabled = 0;
-    }
+    $renderingEnabled = Foswiki::Func::isTrue(
+      Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING'), 1);
     require Foswiki::Plugins::SemanticLinksPlugin::Core;
     Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
