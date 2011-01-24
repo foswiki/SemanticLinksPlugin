@@ -54,11 +54,11 @@ sub preRenderingHandler {
 
     # Change ' [[$1::$2?$3#$4|$5]] '
     $_[0] =~
-s/\[\[([^:][^\|\]\n?]+?)::([^\|\]\n?\#]+)(\?[^\|\]\n\#]+)?(\#[^\|\]\n]+)?\|([^\]\n]+)\]\]/&{$linkHandler}( $1, $2, $3, $4, $5 )/ge;
+s/\[\[([^:][^\|\]\n?]+?)::([^\|\]\n?\#]+)(\?[^\|\]\n\#]+)?(\#[^\|\]\n]+)?\|([^\]\n]+)\]\]/&{$linkHandler}( $1, $2, $3, $4, undef, $5 )/ge;
 
-    # Change ' [[$1::$2?$4#$6][$8]] '
+    # Change ' [[$1::$2?$4#$6 {$7}][$9]] '
     $_[0] =~
-s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#]+)(\?([^\]\n\#]+))?(\#([^\]\n]+))?\](\[([^\]\n]+)\])?\]/&{$linkHandler}( $1, $2, $4, $6, $8 )/ge;
+s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\s*\{[^\]\n]+)?\](\[([^\]\n]+)\])?\]/&{$linkHandler}( $1, $2, $4, $6, $7, $9 )/ge;
 
     # Change ' [[:...' to ' [[... ' so the link will be handled by Foswiki core
     $_[0] =~ s/(^|\s)[^!]?\[\[:/$1\[\[/gm;
@@ -72,7 +72,7 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#]+)(\?([^\]\n\#]+))?(\#([^\]\n]+))?\](\[([^\]\
 # the property topic. For now you can cheat by using your own
 # SemanticLinksPlugin::MissingLink template on the property topic.
 sub renderLink {
-    my ( $property, $value, $valuequery, $valueanchor, $text ) = @_;
+    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
     my $templatetxt;
     my $tmplName = '';
 
@@ -286,7 +286,7 @@ sub beforeSaveHandler {
 }
 
 sub stashLink {
-    my ( $property, $value, $valuequery, $valueanchor, $text ) = @_;
+    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
 
     $semanticlinks{$property}{$value} =
       { query => $valuequery, anchor => $valueanchor, text => $text };
