@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use Foswiki::Func ();    # The plugins API
+use Foswiki::Plugins();
 
 my %templates;
 my %semanticlinks;
@@ -76,8 +77,7 @@ sub renderLink {
     my $templatetxt;
     my $tmplName = '';
 
-    # SMELL: Surely there is a better way to get the rendered topic's web...
-    my $currentWeb = Foswiki::Func::expandCommonVariables('%WEB%');
+    my $currentWeb = $Foswiki::Plugins::SESSION->{webName};
     my ( $propertyweb, $propertytopic ) =
       Foswiki::Func::normalizeWebTopicName( $currentWeb, $property );
     my ( $valueweb, $valuetopic ) =
@@ -205,8 +205,7 @@ sub getTemplate {
         $templates{$property}{$tmplName}{$custTMPL} = $tmpl;
     }
 
-    return Foswiki::Func::expandCommonVariables(
-        $templates{$property}{$tmplName}{$custTMPL} );
+    return $templates{$property}{$tmplName}{$custTMPL};
 }
 
 =begin TML
