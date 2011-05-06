@@ -66,19 +66,19 @@ Given a link of the form:
 Preview:
 <blockquote>[[Example.Property::UserDocumentationCategory?query=part#AnchorPart][Example text]]</blockquote>
 These tokens apply:
-| *Token*          | *Example*                         | *Description*                  |
-| =$text=          | Example text                      | text part of the link          |
-| =$property=      | !Example.Property                 | Property part (LHS of '::')    |
-| =$propertyweb=   | !Example                          | Web part of the property       |
-| =$propertytopic= | !Property                         | Topic part of the property     |
-| =$value=         | !System.UserDocumentationCategory?query=part#AnchorPart \
+| *Token*            | *Example*                       | *Description*                  |
+| =$text=            | Example text                    | text part of the link          |
+| =$property=        | !Example.Property               | Property part (LHS of '::')    |
+| =$property(web)=   | !Example                        | Web part of the property       |
+| =$property(topic)= | !Property                       | Topic part of the property     |
+| =$value=           | !System.UserDocumentationCategory?query=part#AnchorPart \
                                                        | Value part (RHS of '::')       |
-| =$valueweb=      | !System                           | Web part of the value          |
-| =$valuetopic=    | !UserDocumentationCategory        | Topic part of the value        |
-| =$valuequery=    | query=part                        | Query part of the value        |
-| =$valueqquery=   | ?query=part                       | Query part, prefixed with '?'  |
-| =$valueanchor=   | !AnchorPart                       | Anchor part of the value       |
-| =$valueaanchor=  | #AnchorPart                       | Anchor part, prefixed with '#' |
+| =$value(web)=      | !System                         | Web part of the value          |
+| =$value(topic)=    | !UserDocumentationCategory      | Topic part of the value        |
+| =$value(query)=    | query=part                      | Query part of the value        |
+| =$value(qquery)=   | ?query=part                     | Query part, prefixed with '?'  |
+| =$value(anchor)=   | !AnchorPart                     | Anchor part of the value       |
+| =$value(aanchor)=  | #AnchorPart                     | Anchor part, prefixed with '#' |
 
 ---+++ Example: Default DEFs overridden from property topic
 =SemanticLinksPlugin::LinkWithText= used from the [[System.SemanticIsPartOf]] topic
@@ -200,7 +200,8 @@ One line description, required for extensions repository catalog.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
-|  06 Jan 2010 (1.1.0) | Foswikitask:Item9961 - Rename SEMANTICLINKSPLUGIN_ENABLED to SEMANTICLINKSPLUGIN_RENDER; default to on |
+|  06 May 2011 (1.2.0) | Foswikitask:Item9961 - Fix always saving an SLPROPERTY even when no semantic links present; re-work token parser |
+|  06 Jan 2011 (1.1.0) | Foswikitask:Item9961 - Rename SEMANTICLINKSPLUGIN_ENABLED to SEMANTICLINKSPLUGIN_RENDER; default to on |
 |  05 Nov 2010 (1.0.3) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples; fix template bug |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |

@@ -7,29 +7,29 @@ Preview:
 [[System.SemanticIsPartOf::System.UserDocumentationCategory][Example label]]
 
 %JQREQUIRE{"chili"}%<verbatim class="tml">%TMPL:DEF{"SemanticLinksPlugin::Link"}%<span style="background-color: yellow;">
-    [[%TOPIC%]] [[$property][$propertytopic]] [[$value][$valuetopic]]
+    [[%TOPIC%]] [[$property][$property(topic)]] [[$value][$value(topic)]]
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::LinkWithText"}%<span style="background-color: yellow;">
-    [[%TOPIC%]] [[$property][$propertytopic]] [[$value][$valuetopic]] <em>$text</em>
+    [[%TOPIC%]] [[$property][$property(topic)]] [[$value][$value(topic)]] <em>$text</em>
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MissingLink"}%<span \
     class="foswikiNewLink foswikiSemanticLinksPlugin" style="background-color: yellow;">$value
         <a \
-            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            href="%SCRIPTURLPATH{"edit"}%/$value(web)/$value(topic)?topicparent=%WEB%.%TOPIC%" \
             rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
         </a>
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MissingLinkWithText"}%<span \
     class="foswikiNewLink foswikiSemanticLinksPlugin" style="background-color: yellow;">$text
         <a \
-            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            href="%SCRIPTURLPATH{"edit"}%/$value(web)/$value(topic)?topicparent=%WEB%.%TOPIC%" \
             rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
         </a>
     </span>%TMPL:END%
 </verbatim>
 
-<verbatim class="tml">%TMPL:DEF{"SemanticLinksPlugin::MyRDF::LinkWithText"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="MyRDF comment: $text"/>%TMPL:END%
-%TMPL:DEF{"SemanticLinksPlugin::MyRDF::Link"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$valueweb/$valuetopic" rdfs:comment="MyRDF" />%TMPL:END%
+<verbatim class="tml">%TMPL:DEF{"SemanticLinksPlugin::MyRDF::LinkWithText"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$value(web)/$value(topic)" rdfs:comment="MyRDF comment: $text"/>%TMPL:END%
+%TMPL:DEF{"SemanticLinksPlugin::MyRDF::Link"}%<dct:IsPartOf rdf:resource="%SCRIPTURL{"view"}%/$value(web)/$value(topic)" rdfs:comment="MyRDF" />%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLinkWithText"}%%TMPL:P{"LinkWithText"}%%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MyRDF::MissingLink"}%%TMPL:P{"Link"}%%TMPL:END%</verbatim>
 

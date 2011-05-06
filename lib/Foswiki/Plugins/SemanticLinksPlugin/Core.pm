@@ -12,9 +12,46 @@ use warnings;
 
 use Foswiki::Func ();    # The plugins API
 use Foswiki::Plugins();
+use Data::Dumper;
 
 my %templates;
 my %semanticlinks;
+
+# @attrs = ( $property, $value, $valuequery, $valueanchor, $metaproperties,
+#            $text, $propertyweb, $propertytopic, $valueweb, $valuetopic )
+my %tokenidents = (
+    property => {
+        _     => 0,
+        web   => 6,
+        topic => 7
+    },
+    propertyweb   => 6,
+    propertytopic => 7,
+    value         => {
+        _prefixes => {
+            qquery  => '?',
+            aanchor => '#'
+        },
+        _       => 1,
+        query   => 2,
+        qquery  => 2,
+        anchor  => 3,
+        aanchor => 3,
+        web     => 8,
+        topic   => 9
+    },
+    _prefixes => {
+        valueqquery  => '?',
+        valueaanchor => '#'
+    },
+    valueweb     => 8,
+    valuetopic   => 9,
+    valuequery   => 2,
+    valueqquery  => 2,
+    valueanchor  => 3,
+    valueaanchor => 3,
+    text         => 5
+);
 
 sub init {
     %templates = ();
@@ -73,27 +110,19 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\
 # the property topic. For now you can cheat by using your own
 # SemanticLinksPlugin::MissingLink template on the property topic.
 sub renderLink {
-    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
+
+#my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
+    my @attrs    = @_;
+    my $topicWeb = $Foswiki::Plugins::SESSION->{webName};
+    my ( $propertyweb, $propertytopic ) =
+      Foswiki::Func::normalizeWebTopicName( $topicWeb, $attrs[0] );
+    my ( $valueweb, $valuetopic ) =
+      Foswiki::Func::normalizeWebTopicName( $topicWeb, $attrs[1] );
     my $templatetxt;
     my $tmplName = '';
 
-    my $currentWeb = $Foswiki::Plugins::SESSION->{webName};
-    my ( $propertyweb, $propertytopic ) =
-      Foswiki::Func::normalizeWebTopicName( $currentWeb, $property );
-    my ( $valueweb, $valuetopic ) =
-      Foswiki::Func::normalizeWebTopicName( $currentWeb, $value );
-    $property    ||= '';
-    $value       ||= '';
-    $valuequery  ||= '';
-    $valueanchor ||= '';
-    $text        ||= '';
-
-    #    if (   ( $text eq $Foswiki::cfg{HomeTopicName} )
-    #        && ( $web ne $this->{session}->{webName} ) )
-    #    {
-    #        $linkText = $web;
-    #    }
-    if ($text) {
+    push( @attrs, $propertyweb, $propertytopic, $valueweb, $valuetopic );
+    if ( $attrs[5] ) {
         $tmplName = 'WithText';
     }
     if ( Foswiki::Func::topicExists( $valueweb, $valuetopic ) ) {
@@ -104,29 +133,44 @@ sub renderLink {
     }
 
     $templatetxt = getTemplate( $propertyweb, $propertytopic, $tmplName );
-    $templatetxt =~ s/\$propertyweb\b/$propertyweb/g;
-    $templatetxt =~ s/\$propertytopic\b/$propertytopic/g;
-    $templatetxt =~ s/\$property\b/$property/g;
-    $templatetxt =~ s/\$valueweb\b/$valueweb/g;
-    $templatetxt =~ s/\$valuetopic\b/$valuetopic/g;
-    $templatetxt =~ s/\$value\b/$value/g;
-    $templatetxt =~ s/\$valuequery\b/$valuequery/g;
-    $templatetxt =~ s/\$valueanchor\b/$valueanchor/g;
-    $templatetxt =~ s/\$text\b/$text/g;
-    if ($valuequery) {
-        $templatetxt =~ s/\$valueqquery\b/?$valuequery/g;
-    }
-    else {
-        $templatetxt =~ s/\$valueqquery\b//g;
-    }
-    if ($valuequery) {
-        $templatetxt =~ s/\$valueaanchor\b/#$valueanchor/g;
-    }
-    else {
-        $templatetxt =~ s/\$valueaanchor\b//g;
-    }
+    $templatetxt =~
+s/\$([a-z]+)(\(\s*([^\)]+)\s*\))?/_expandToken($1, $3, \@attrs, \%tokenidents )/ge;
+    print STDERR "Template: $templatetxt\n";
 
     return Foswiki::Func::expandCommonVariables($templatetxt);
+}
+
+sub _expandToken {
+    my ( $token, $args, $attrs, $ident ) = @_;
+    my $val;
+
+    if ( defined $token ) {
+        if ( exists $ident->{$token} ) {
+            $val = $ident->{$token};
+            if ( ref($val) eq 'CODE' ) {
+                $val = $val->( $attrs->[ $ident->{_} ] );
+            }
+            elsif ( ref($val) eq 'HASH' ) {
+                $val = _expandToken( $args || '_', undef, $attrs, $val );
+            }
+            else {
+                $val = $attrs->[$val] || '';
+            }
+            if (    exists $ident->{_prefixes}
+                and exists $ident->{_prefixes}->{$token} )
+            {
+                $val = $ident->{_prefixes}->{$token} . $val;
+            }
+        }
+        else {
+            $val = $token;
+        }
+    }
+    else {
+        $val = '';
+    }
+
+    return $val;
 }
 
 sub _getTemplateFromExplicitDef {
@@ -234,58 +278,64 @@ sub beforeSaveHandler {
     my @SLPROPERTIES;
     my @SLPROPERTY;
     my @SLPROPERTYVALUE;
+    my @properties;
 
     %semanticlinks = ();
 
     # Instead of rendering, linkHandler will be set to stashLink() which
     # populates the %semanticlinks hash.
     preRenderingHandler($text);
+    @properties = keys %semanticlinks;
 
-    # In a perfect world, we'd have query syntax sufficient to avoid needing
-    # the SLPROPERTIES and SLPROPERTY keys at all. For now, SLPROPERTIES can
-    # tell a wiki app what distinct properties are present on a given topic.
-    @SLPROPERTIES = {
-        value => join( ',', keys %semanticlinks ),
-        num   => scalar( keys %semanticlinks )
-    };
-    foreach my $property ( keys %semanticlinks ) {
+    if ( scalar(@properties) ) {
 
-        # As for SLPROPERTY, this can tell a wiki app what distinct values
-        # there are for a given property.
-        push(
-            @SLPROPERTY,
-            {
-                name   => $property,
-                values => join( ',', keys %{ $semanticlinks{$property} } ),
-                num    => scalar( keys %{ $semanticlinks{$property} } )
-            }
-        );
-        my $valuecount = 1;
-        foreach my $value ( keys %{ $semanticlinks{$property} } ) {
+        # In a perfect world, we'd have query syntax sufficient to avoid needing
+        # the SLPROPERTIES and SLPROPERTY keys at all. For now, SLPROPERTIES can
+        # tell a wiki app what distinct properties are present on a given topic.
+        @SLPROPERTIES = {
+            value => join( ',', @properties ),
+            num   => scalar(@properties)
+        };
+        foreach my $property (@properties) {
+
+            # As for SLPROPERTY, this can tell a wiki app what distinct values
+            # there are for a given property.
             push(
-                @SLPROPERTYVALUE,
+                @SLPROPERTY,
                 {
-                    name     => $property . '__' . $valuecount,
-                    property => $property,
-                    value    => $value,
-
-                    # query, anchor, text
-                    %{ $semanticlinks{$property}{$value} }
+                    name   => $property,
+                    values => join( ',', keys %{ $semanticlinks{$property} } ),
+                    num    => scalar( keys %{ $semanticlinks{$property} } )
                 }
             );
-            $valuecount = $valuecount + 1;
-        }
-    }
+            my $valuecount = 1;
+            foreach my $value ( keys %{ $semanticlinks{$property} } ) {
+                push(
+                    @SLPROPERTYVALUE,
+                    {
+                        name     => $property . '__' . $valuecount,
+                        property => $property,
+                        value    => $value,
 
-    $topicObject->putAll( 'SLPROPERTIES',    @SLPROPERTIES );
-    $topicObject->putAll( 'SLPROPERTY',      @SLPROPERTY );
-    $topicObject->putAll( 'SLPROPERTYVALUE', @SLPROPERTYVALUE );
+                        # query, anchor, text
+                        %{ $semanticlinks{$property}{$value} }
+                    }
+                );
+                $valuecount = $valuecount + 1;
+            }
+        }
+
+        $topicObject->putAll( 'SLPROPERTIES',    @SLPROPERTIES );
+        $topicObject->putAll( 'SLPROPERTY',      @SLPROPERTY );
+        $topicObject->putAll( 'SLPROPERTYVALUE', @SLPROPERTYVALUE );
+    }
 
     return;
 }
 
 sub stashLink {
-    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
+    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text )
+      = @_;
 
     $semanticlinks{$property}{$value} =
       { query => $valuequery, anchor => $valueanchor, text => $text };
