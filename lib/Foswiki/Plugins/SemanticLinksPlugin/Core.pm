@@ -275,7 +275,6 @@ sub getTemplate {
 
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
-    my @SLPROPERTIES;
     my @SLPROPERTY;
     my @SLPROPERTYVALUE;
     my @properties;
@@ -290,12 +289,8 @@ sub beforeSaveHandler {
     if ( scalar(@properties) ) {
 
         # In a perfect world, we'd have query syntax sufficient to avoid needing
-        # the SLPROPERTIES and SLPROPERTY keys at all. For now, SLPROPERTIES can
-        # tell a wiki app what distinct properties are present on a given topic.
-        @SLPROPERTIES = {
-            value => join( ',', @properties ),
-            num   => scalar(@properties)
-        };
+        # the SLPROPERTY type at all. For now, SLPROPERTIES can tell a wiki app
+        # what distinct properties are present on a given topic.
         foreach my $property (@properties) {
 
             # As for SLPROPERTY, this can tell a wiki app what distinct values
@@ -325,7 +320,6 @@ sub beforeSaveHandler {
             }
         }
 
-        $topicObject->putAll( 'SLPROPERTIES',    @SLPROPERTIES );
         $topicObject->putAll( 'SLPROPERTY',      @SLPROPERTY );
         $topicObject->putAll( 'SLPROPERTYVALUE', @SLPROPERTYVALUE );
     }

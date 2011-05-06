@@ -13,8 +13,8 @@ use warnings;
 use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
-our $VERSION = '$Rev$ (2010-11-05)';
-our $RELEASE = '1.0.3';
+our $VERSION = '$Rev$ (2011-05-06)';
+our $RELEASE = '2.0.0';
 our $SHORTDESCRIPTION =
 'Populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
@@ -42,29 +42,25 @@ sub initPlugin {
 
         return $warning;
     }
-    $renderingEnabled = Foswiki::Func::isTrue(
-      Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING'), 1);
+    $renderingEnabled =
+      Foswiki::Func::isTrue(
+        Foswiki::Func::getPreferencesValue('SEMANTICLINKSPLUGIN_RENDERING'),
+        1 );
     require Foswiki::Plugins::SemanticLinksPlugin::Core;
     Foswiki::Plugins::SemanticLinksPlugin::Core::init();
 
     # Foswiki 1.1
     if ( defined &Foswiki::Meta::registerMETA ) {
         Foswiki::Meta::registerMETA(
-            'SLPROPERTIES',
-            alias   => 'slproperties',
-            require => [qw(value)],
-            allow   => [qw(num)]
-        );
-        Foswiki::Meta::registerMETA(
             'SLPROPERTY',
-            alias   => 'slproperty',
+            alias   => 'slproperties',
             many    => 1,
             require => [qw(name values)],
             allow   => [qw(num)]
         );
         Foswiki::Meta::registerMETA(
             'SLPROPERTYVALUE',
-            alias   => 'slpropertyvalue',
+            alias   => 'slvalues',
             many    => 1,
             require => [qw(name value property)],
             allow   => [qw(query anchor text)]

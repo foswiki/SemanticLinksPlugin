@@ -126,7 +126,6 @@ If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], i
 <verbatim class="tml">Frogs [[Eat::Flies][eat flies]], [[Eat::Mosquitos][mosquitos]]
 and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
 <verbatim class="tml">
- %META:SLPROPERTIES{                                      value="Eat,PreyOf"                    }%
  %META:SLPROPERTY{     name="Eat"                         values="Flies,Mosquitos" num="2"      }%
  %META:SLPROPERTYVALUE{name="Eat__1"    property="Eat"    value="Flies"                         }%
  %META:SLPROPERTYVALUE{name="Eat__2"    property="Eat"    value="Mosquitos"                     }%
@@ -134,26 +133,26 @@ and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
  %META:SLPROPERTYVALUE{name="PreyOf__1" property="PreyOf" value="Snakes"                        }%</verbatim>
 
 A complete list of properties on a given topic may be obtained using:
-<verbatim class="tml">%QUERY{"slproperties.value"}%</verbatim>
+<verbatim class="tml">%QUERY{"slproperties.name"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"slproperties.value"}%</blockquote>
+<blockquote>%QUERY{"slproperties.name"}%</blockquote>
 
 A complete list of values for a given property may be obtained using:
-<verbatim class="tml">%QUERY{"slpropertyvalue[property='Eat'].value"}%</verbatim>
+<verbatim class="tml">%QUERY{"slvalues[property='Eat'].value"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"slpropertyvalue[property='Eat'].value"}%</blockquote>
+<blockquote>%QUERY{"slvalues[property='Eat'].value"}%</blockquote>
 
 Or alternatively:
-<verbatim class="tml">%QUERY{"slproperty[name='Eat'].values"}%</verbatim>
+<verbatim class="tml">%QUERY{"slproperties[name='Eat'].values"}%</verbatim>
 Preview:
-<blockquote>%QUERY{"slproperty[name='Eat'].values"}%</blockquote>
+<blockquote>%QUERY{"slproperties[name='Eat'].values"}%</blockquote>
 
 And all values of all properties on the current topic could be rendered using:
 <verbatim class="tml">%FORMAT{
-  "%QUERY{"slproperties.value"}%"
+  "%QUERY{"slproperties.name"}%"
   type="string"
   format="$percentFORMAT{
-    \"$percentQUERY{\"slproperty[name='$item'].values\"}$percent\"
+    \"$percentQUERY{\"slvalues[property='$item'].value\"}$percent\"
     type=\"topic\"
     header=\"   * $item$n\"
     format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
@@ -162,10 +161,10 @@ And all values of all properties on the current topic could be rendered using:
 
 *Preview:*
 %FORMAT{
-  "%QUERY{"slproperties.value"}%"
+  "%QUERY{"slproperties.name"}%"
   type="string"
   format="$percentFORMAT{
-    \"$percentQUERY{\"slproperty[name='$item'].values\"}$percent\"
+    \"$percentQUERY{\"slvalues[property='$item'].value\"}$percent\"
     type=\"topic\"
     header=\"   * $item$n\"
     format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
@@ -195,17 +194,19 @@ One line description, required for extensions repository catalog.
 ---++ Plugin Info
 
 |  Author: | Foswiki:Main.PaulHarvey |
-|  Copyright: | © 2010, [[http://www.taxonomy.org.au][Taxonomy Research & Information Network]], Foswiki Contributors |
+|  Copyright: | © 2011, [[http://www.taxonomy.org.au][Taxonomy Research & Information Network]], Foswiki Contributors |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
-|  06 May 2011 (1.2.0) | Foswikitask:Item9961 - Fix always saving an SLPROPERTY even when no semantic links present; re-work token parser |
+|  06 May 2011 (2.0.0) | Foswikitask:Item9961 - Deleted SLPROPERTIES. %X% Renamed =slpropertyvalue= and =slproperty= to =slvalues= and =slproperties= - you will need to re-write your queries! |
+|  06 May 2011 (1.2.0) | Foswikitask:Item9961 - Fix always saving an SLPROPERTIES even when no semantic links present; re-work token parser |
 |  06 Jan 2011 (1.1.0) | Foswikitask:Item9961 - Rename SEMANTICLINKSPLUGIN_ENABLED to SEMANTICLINKSPLUGIN_RENDER; default to on |
 |  05 Nov 2010 (1.0.3) | Foswikitask:Item9948 - Fix registerMETA bug, QUERY examples; fix template bug |
 |  03 Nov 2010 (1.0.0) | Foswikitask:Item9897 - Initial version |
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
+
 
 %META:SLPROPERTYVALUE{name="System.SemanticIsPartOf__1" anchor="" property="System.SemanticIsPartOf" query="" text="User documentation" value="System.UserDocumentationCategory"}%
 %META:SLPROPERTYVALUE{name="Example.Property__1" anchor="AnchorPart" property="Example.Property" query="query=part" text="Example text" value="UserDocumentationCategory"}%
@@ -220,5 +221,3 @@ One line description, required for extensions repository catalog.
 %META:SLPROPERTY{name="IsPartOf" num="1" values="UserDocumentationCategory"}%
 %META:PREFERENCE{name="PERM_ID_HUMAN" title="PERM_ID_HUMAN" type="Local" value="Sandbox_SemanticLinksPlugin"}%
 %META:PREFERENCE{name="PERM_ID_MD5" title="PERM_ID_MD5" type="Local" value="bce61d48ce67d4cda40c1f0289896a20"}%
-%META:SLPROPERTIES{value="System.SemanticIsPartOf,Example.Property,PreyOf,Eat,IsPartOf"}%
-
