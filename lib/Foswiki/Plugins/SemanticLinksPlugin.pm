@@ -91,8 +91,13 @@ sub initPlugin {
         );
     }
     @base = ( $web, $topic );
-    Foswiki::Func::registerRESTHandler( 'reparse', \&restReparseHandler,
-        authenticate => 1 );
+    if ( Foswiki::Func::getContext()->{'command_line'} ) {
+        Foswiki::Func::registerRESTHandler( 'reparse', \&restReparseHandler );
+    }
+    else {
+        Foswiki::Func::registerRESTHandler( 'reparse', \&restReparseHandler,
+            authenticate => 1 );
+    }
 
     return 1;
 }

@@ -19,6 +19,7 @@ my %semanticlinks;
 my %nsemanticlinks;
 my %links;
 my $nlinks;
+my $restResult;
 
 #From Foswiki::Render
 my $STARTWW  = qr/^|(?<=[\s\(])/m;
@@ -294,7 +295,6 @@ sub getTemplate {
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
-    $nlinks          = 1;
     $hardvars{WEB}   = $Foswiki::Plugins::SESSION->{webName};
     $hardvars{TOPIC} = $Foswiki::Plugins::SESSION->{topicName};
     ( $hardvars{BASEWEB}, $hardvars{BASETOPIC} ) =
@@ -312,6 +312,8 @@ sub beforeSaveHandler {
 sub plainLinksSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
+    %links  = ();
+    $nlinks = 1;
     $text =~
 s/\[\[[:]?\s*([^\]\n\?\#]+?)(\?([^\]\n\#]+?))?(\#([^\]\n]+?))?\s*\](\[([^\]\n]+?)\])?\]/stashPlainLink(undef, 'bracket', $1, $3, $5, $6)/ge;
 
@@ -492,6 +494,7 @@ sub restReparseHandler {
     my $recurse;
     my @webNames;
 
+    $restResult = '';
     if ( defined &Foswiki::Func::getRequestObject ) {
         $query = Foswiki::Func::getRequestObject();
     }
@@ -514,7 +517,7 @@ sub restReparseHandler {
     }
     unshift( @webNames, $webParam ) if ( defined($webParam) );
 
-    my $result = "<pre>\nImporting:\n";
+    _report("<pre>\nImporting:\n");
     foreach my $web (@webNames) {
         my @topics;
         my $count = 0;
@@ -525,21 +528,17 @@ sub restReparseHandler {
         else {
             @topics = Foswiki::Func::getTopicList($web);
         }
-        $result .= "$web\n";
+        _report("$web\n\tupdating ");
         foreach my $topic (@topics) {
-            my ($topicObj) = Foswiki::Func::readTopic( $web, $topic );
+            my ($topicObj)  = Foswiki::Func::readTopic( $web, $topic );
+            my ($otopicObj) = Foswiki::Func::readTopic( $web, $topic );
 
             if ( $topicObj->haveAccess('CHANGE') ) {
-                my $text    = $topicObj->getEmbeddedStoreForm();
-                my $oldtext = $text;
-
-                beforeSaveHandler( $text, $topic, $web, $topicObj );
+                beforeSaveHandler( $topicObj->getEmbeddedStoreForm(),
+                    $topic, $web, $topicObj );
                 if ( $topicObj->count('LINK') or $topicObj->count('SLVALUE') ) {
-                    my $newtext = $topicObj->getEmbeddedStoreForm();
-
-                    #$result .= "\t$topic has data :-)\n";
-                    if ( $newtext ne $oldtext ) {
-                        $result .= "\t$topic update\n";
+                    if ( _different( $topicObj, $otopicObj ) ) {
+                        _report("$topic, ");
                         $topicObj->save();
                     }
                     else {
@@ -549,15 +548,118 @@ sub restReparseHandler {
                 }
             }
             else {
-                $result .= "\nFAILED: no permission to CHANGE $web.$topic\n\n";
+                _report("\nFAILED: no permission to CHANGE $web.$topic\n\n");
             }
-            if ( ( $count % 1000 ) == 0 ) {
-                $result .= "\tRe-parsed $count (doing $topic)...\n";
+            if ( ( $count % 200 ) == 0 ) {
+                _report("\n\tRe-parsed $count (doing $topic)...\n\tupdating ");
             }
             $count += 1;
         }
     }
-    return $result . "\n\n</pre>";
+    return $restResult . "\n\n</pre>";
+}
+
+sub _report {
+    my ($text) = @_;
+
+    if ( Foswiki::Func::getContext()->{'command_line'} ) {
+        print STDERR $text;
+    }
+    else {
+        $restResult .= $text;
+    }
+
+    return;
+}
+
+sub _different {
+    my ( $a, $b ) = @_;
+    my $different;
+
+    if ( _checkTHING( 'LINK', $a, $b ) ) {
+        $different = 1;
+    }
+    elsif ( _checkTHING( 'SLVALUE', $a, $b ) ) {
+        $different = 1;
+    }
+
+    return $different;
+}
+
+sub _checkTHING {
+    my ( $type, $a, $b ) = @_;
+    my %A  = map { $_->{name} => $_ } $a->find($type);
+    my @a  = keys(%A);
+    my $nA = scalar(@a);
+    my %B  = map { $_->{name} => $_ } $b->find($type);
+    my $different;
+
+    if ( $nA != scalar( keys %B ) ) {
+
+        #_report("Different number of keys in $type");
+        $different = 1;
+    }
+    else {
+        my $i = 0;
+
+        while ( $i < $nA and not $different ) {
+            my $aKey = $a[$i];
+
+            if ( defined $A{$aKey} and defined $B{$aKey} ) {
+                $different = _checkHash( $A{$aKey}, $B{$aKey} );
+                if ($different) {
+
+    #_report("Different in $type $aKey: A was $A{$aKey} and B was $B{$aKey}\n");
+                }
+            }
+            elsif ( defined $A{$aKey} or defined $B{$aKey} ) {
+                $different = 1;
+
+ #_report("Different in $type $aKey: one was defined where the other wasn't\n");
+            }
+            $i += 1;
+        }
+    }
+
+    return $different;
+}
+
+sub _checkHash {
+    my ( $A, $B ) = @_;
+    my @a  = keys %{$A};
+    my $nA = scalar(@a);
+    my $different;
+    my $i = 0;
+
+    while ( $i < $nA and not $different ) {
+        my $aKey   = $a[$i];
+        my $aValue = $A->{$aKey};
+        my $bValue = $B->{$aKey};
+
+        if (
+            exists $B->{$aKey}
+            and (
+                (
+                        defined $aValue
+                    and defined $bValue
+                    and $aValue eq $bValue
+                )
+                or not( defined $aValue or defined $bValue )
+            )
+          )
+        {
+
+            # The same :-)
+        }
+        else {
+            $different = 1;
+
+  #_report("Different in val key $aKey, A was $aValue and B was $B->{$aKey}\n");
+        }
+        $i += 1;
+    }
+
+    return $different;
 }
 
 1;
