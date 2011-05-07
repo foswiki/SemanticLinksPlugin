@@ -16,10 +16,11 @@ use Foswiki::Plugins ();    # For the API version
 our $VERSION = '$Rev$ (2011-05-06)';
 our $RELEASE = '2.0.0';
 our $SHORTDESCRIPTION =
-'Populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
+'QuerySearch backlinks, and populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
 
 my $renderingEnabled;
+my @base;
 
 =begin TML
 
@@ -51,6 +52,7 @@ sub initPlugin {
 
     # Foswiki 1.1
     if ( defined &Foswiki::Meta::registerMETA ) {
+
         Foswiki::Meta::registerMETA(
             'SLPROPERTY',
             alias   => 'slproperties',
@@ -59,15 +61,54 @@ sub initPlugin {
             allow   => [qw(num)]
         );
         Foswiki::Meta::registerMETA(
-            'SLPROPERTYVALUE',
+            'SLVALUE',
             alias   => 'slvalues',
             many    => 1,
             require => [qw(name value property)],
-            allow   => [qw(query anchor text)]
+            allow   => [qw(query anchor text propertyseq)]
+        );
+        Foswiki::Meta::registerMETA(
+            'LINK',
+            alias   => 'links',
+            many    => 1,
+            require => [qw(name address scope)],
+            allow   => [qw(web topic type)]
+        );
+
+        # These are legacy types which we ignore.
+        Foswiki::Meta::registerMETA(
+            'SLPROPERTIES',
+            alias   => 'oldslproperties',
+            require => [qw(value)],
+            allow   => [qw(num)]
+        );
+        Foswiki::Meta::registerMETA(
+            'SLPROPERTYVALUE',
+            alias   => 'oldslpropertyvalues',
+            many    => 1,
+            require => [qw(name value property)],
+            allow   => [qw(query anchor text propertyseq)]
         );
     }
+    @base = ( $web, $topic );
+    Foswiki::Func::registerRESTHandler( 'reparse', \&restReparseHandler,
+        authenticate => 1 );
 
     return 1;
+}
+
+sub restReparseHandler {
+    my ( $session, $subject, $verb, $response ) = @_;
+
+    require Foswiki::Plugins::SemanticLinksPlugin::Core;
+
+    return Foswiki::Plugins::SemanticLinksPlugin::Core::restReparseHandler(
+        $session, $subject, $verb, $response );
+}
+
+sub getBase {
+
+    return @base;
 }
 
 sub preRenderingHandler {
@@ -83,9 +124,8 @@ sub preRenderingHandler {
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
-    if ($renderingEnabled) {
-        Foswiki::Plugins::SemanticLinksPlugin::Core::beforeSaveHandler(@_);
-    }
+    require Foswiki::Plugins::SemanticLinksPlugin::Core;
+    Foswiki::Plugins::SemanticLinksPlugin::Core::beforeSaveHandler(@_);
 
     return;
 }
@@ -95,8 +135,8 @@ sub beforeSaveHandler {
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 
-Copyright (C) 2010 Paul.W.Harvey@csiro.au, http://trin.org.au
-Copyright (C) 2010 Foswiki Contributors. Foswiki Contributors
+Copyright (C) 2010-2011 Paul.W.Harvey@csiro.au, http://trin.org.au
+Copyright (C) 2010-2011 Foswiki Contributors. Foswiki Contributors
 are listed in the AUTHORS file in the root of this distribution.
 NOTE: Please extend that file, not this notice.
 

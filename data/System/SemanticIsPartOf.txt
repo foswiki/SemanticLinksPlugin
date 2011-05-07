@@ -10,7 +10,7 @@ Preview:
     [[%TOPIC%]] [[$property][$property(topic)]] [[$value][$value(topic)]]
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::LinkWithText"}%<span style="background-color: yellow;">
-    [[%TOPIC%]] [[$property][$property(topic)]] [[$value][$value(topic)]] <em>$text</em>
+    [[%TOPIC%]] [[$property][$property(topic)]] [[$value][$value(topic)]] (q: $value(qquery), a: $value(aanchor)) <em>$text</em>
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MissingLink"}%<span \
     class="foswikiNewLink foswikiSemanticLinksPlugin" style="background-color: yellow;">$value

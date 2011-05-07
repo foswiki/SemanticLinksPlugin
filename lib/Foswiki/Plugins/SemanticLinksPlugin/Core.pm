@@ -16,6 +16,25 @@ use Data::Dumper;
 
 my %templates;
 my %semanticlinks;
+my %nsemanticlinks;
+my %links;
+my $nlinks;
+
+#From Foswiki::Render
+my $STARTWW  = qr/^|(?<=[\s\(])/m;
+my $ENDWW    = qr/$|(?=[\s,.;:!?)])/m;
+my %hardvars = (
+    HOMETOPIC       => $Foswiki::cfg{HomeTopicName},
+    WEBPREFSTOPIC   => $Foswiki::cfg{WebPrefsTopicName},
+    WIKIUSERSTOPIC  => $Foswiki::cfg{UsersTopicName},
+    STATISTICSTOPIC => $Foswiki::cfg{Stats}{TopicName},
+    NOTIFYTOPIC     => $Foswiki::cfg{NotifyTopicName},
+    WIKIPREFSTOPIC  => $Foswiki::cfg{SitePrefsTopicName},
+    SYSTEMWEB       => $Foswiki::cfg{SystemWebName},
+    USERSWEB        => $Foswiki::cfg{UsersWebName},
+    TRASHWEB        => $Foswiki::cfg{TrashWebName},
+    SANDBOXWEB      => $Foswiki::cfg{SandboxWebName}
+);
 
 # @attrs = ( $property, $value, $valuequery, $valueanchor, $metaproperties,
 #            $text, $propertyweb, $propertytopic, $valueweb, $valuetopic )
@@ -79,7 +98,7 @@ sub preRenderingHandler {
     if ( not defined $pMap ) {
 
         # SMELL: are we really being called from beforeSaveHandler()?
-        $linkHandler = \&stashLink;
+        $linkHandler = \&stashSemLink;
     }
 
     # You can work on $text in place by using the special perl
@@ -112,7 +131,7 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\
 sub renderLink {
 
 #my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
-    my @attrs    = @_;
+    my (@attrs) = @_;
     my $topicWeb = $Foswiki::Plugins::SESSION->{webName};
     my ( $propertyweb, $propertytopic ) =
       Foswiki::Func::normalizeWebTopicName( $topicWeb, $attrs[0] );
@@ -135,7 +154,6 @@ sub renderLink {
     $templatetxt = getTemplate( $propertyweb, $propertytopic, $tmplName );
     $templatetxt =~
 s/\$([a-z]+)(\(\s*([^\)]+)\s*\))?/_expandToken($1, $3, \@attrs, \%tokenidents )/ge;
-    print STDERR "Template: $templatetxt\n";
 
     return Foswiki::Func::expandCommonVariables($templatetxt);
 }
@@ -163,7 +181,7 @@ sub _expandToken {
             }
         }
         else {
-            $val = $token;
+            $val = '$' . $token;
         }
     }
     else {
@@ -275,15 +293,120 @@ sub getTemplate {
 
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
+
+    $nlinks          = 1;
+    $hardvars{WEB}   = $Foswiki::Plugins::SESSION->{webName};
+    $hardvars{TOPIC} = $Foswiki::Plugins::SESSION->{topicName};
+    ( $hardvars{BASEWEB}, $hardvars{BASETOPIC} ) =
+      Foswiki::Plugins::SemanticLinksPlugin::getBase();
+
+    # Expand prefs
+    $text =~ s/(%([A-Z]+)%)/
+        Foswiki::Func::getPreferencesValue($2) || $hardvars{$2} || $1/gex;
+    semanticLinksSaveHandler( $text, $topic, $web, $topicObject );
+    plainLinksSaveHandler( $text, $topic, $web, $topicObject );
+
+    return;
+}
+
+sub plainLinksSaveHandler {
+    my ( $text, $topic, $web, $topicObject ) = @_;
+
+    $text =~
+s/\[\[[:]?\s*([^\]\n\?\#]+?)(\?([^\]\n\#]+?))?(\#([^\]\n]+?))?\s*\](\[([^\]\n]+?)\])?\]/stashPlainLink(undef, 'bracket', $1, $3, $5, $6)/ge;
+
+    # From Foswiki::Render
+    $text =~ s/(^|(?<!url)[-*\s(|])
+               ($Foswiki::regex{linkProtocolPattern}:
+                   ([^\s<>"]+[^\s*.,!?;:)<|]))/
+                     stashPlainLink( 'external', 'autolink', $2)/gex;
+
+    # From Foswiki::Render
+    $text =~ s/$STARTWW
+        (($Foswiki::regex{webNameRegex})\.)?
+        ($Foswiki::regex{wikiWordRegex}|
+        $Foswiki::regex{abbrevRegex})
+        ($Foswiki::regex{anchorRegex})?/
+        stashPlainLink('internal', 'autolink', ($1 || '') . $3, undef, $4)/gexm;
+    $topicObject->putAll( 'LINK', values %links );
+
+    return;
+}
+
+sub stashPlainLink {
+    my ( $scope, $type, $address, $query, $anchor, $text ) = @_;
+    my $dostash = 1;
+
+    if ( not exists $links{$address} ) {
+        if (   ( $scope and $scope eq 'external' )
+            or ( $address =~ /^$Foswiki::regex{linkProtocolPattern}:/ ) )
+        {
+            $links{$address} = {
+                name    => $nlinks,
+                address => $address,
+                scope   => 'external'
+            };
+            if ($type) {
+                $links{$address}->{type} = $type;
+            }
+            $nlinks += 1;
+            $dostash = 0;
+        }
+        elsif (    # TLA abbreviations
+                $scope
+            and $scope eq 'internal'
+            and $type
+            and $type eq 'autolink'
+            and $address =~ /^$Foswiki::regex{abbrevRegex}$/
+            and not Foswiki::Func::topicExists(
+                Foswiki::Func::normalizeWebTopicName(
+                    $Foswiki::Plugins::SESSION->{webName}, $address
+                )
+            )
+          )
+        {
+            $dostash = 0;
+        }
+        if ($dostash) {
+            my ( $web, $topic, $rev ) = Foswiki::Func::normalizeWebTopicName(
+                $Foswiki::Plugins::SESSION->{webName}, $address );
+            my $name = $web . '__' . $topic;
+
+            if ( defined $rev ) {
+                $name .= '@' . $rev;
+                $links{$name}->{rev} = $rev;
+            }
+            if ( not exists $links{$name} ) {
+                $links{$name} = {
+                    name    => $nlinks,
+                    web     => $web,
+                    topic   => $topic,
+                    address => "$web.$topic",
+                    scope   => 'internal'
+                };
+                if ($type) {
+                    $links{$name}->{type} = $type;
+                }
+                $nlinks += 1;
+            }
+        }
+    }
+
+    return '';
+}
+
+sub semanticLinksSaveHandler {
+    my ( $text, $topic, $web, $topicObject ) = @_;
     my @SLPROPERTY;
-    my @SLPROPERTYVALUE;
+    my @SLVALUE;
     my @properties;
 
-    %semanticlinks = ();
+    %semanticlinks  = ();
+    %nsemanticlinks = ();
 
-    # Instead of rendering, linkHandler will be set to stashLink() which
+    # Instead of rendering, linkHandler will be set to stashSemLink() which
     # populates the %semanticlinks hash.
-    preRenderingHandler($text);
+    preRenderingHandler( $_[0] );
     @properties = keys %semanticlinks;
 
     if ( scalar(@properties) ) {
@@ -303,12 +426,12 @@ sub beforeSaveHandler {
                     num    => scalar( keys %{ $semanticlinks{$property} } )
                 }
             );
-            my $valuecount = 1;
             foreach my $value ( keys %{ $semanticlinks{$property} } ) {
                 push(
-                    @SLPROPERTYVALUE,
+                    @SLVALUE,
                     {
-                        name     => $property . '__' . $valuecount,
+                        name => $property . '__'
+                          . $semanticlinks{$property}{$value}->{propertyseq},
                         property => $property,
                         value    => $value,
 
@@ -316,25 +439,125 @@ sub beforeSaveHandler {
                         %{ $semanticlinks{$property}{$value} }
                     }
                 );
-                $valuecount = $valuecount + 1;
+                stashPlainLink( 'internal', 'semantic', $value );
             }
         }
 
-        $topicObject->putAll( 'SLPROPERTY',      @SLPROPERTY );
-        $topicObject->putAll( 'SLPROPERTYVALUE', @SLPROPERTYVALUE );
+        $topicObject->putAll( 'SLPROPERTY', @SLPROPERTY );
+        $topicObject->putAll( 'SLVALUE',    @SLVALUE );
+
+        # These are unused legacy types
+        $topicObject->putAll( 'SLPROPERTYVALUE', () );
+        $topicObject->putAll( 'SLPROPERTIES',    () );
     }
 
     return;
 }
 
-sub stashLink {
+sub stashSemLink {
     my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text )
       = @_;
+    my $semlink = $semanticlinks{$property}{$value};
 
-    $semanticlinks{$property}{$value} =
-      { query => $valuequery, anchor => $valueanchor, text => $text };
+    if ( not exists $nsemanticlinks{$property} ) {
+        $nsemanticlinks{$property} = 1;
+    }
+    elsif ( not defined $semlink ) {
+        $nsemanticlinks{$property} += 1;
+    }
+    if ( not defined $semlink ) {
+        $semlink = {};
+        $semanticlinks{$property}{$value} = $semlink;
+    }
+    if ($valuequery) {
+        $semlink->{query} = $valuequery;
+    }
+    if ($valueanchor) {
+        $semlink->{anchor} = $valueanchor;
+    }
+    if ($text) {
+        $semlink->{text} = $text;
+    }
+    $semlink->{propertyseq} = $nsemanticlinks{$property};
 
     return '';
+}
+
+# Inspired by MongoDBPlugin's update handler :-)
+sub restReparseHandler {
+    my ($session) = @_;
+    my $query;
+    my $webParam;
+    my $topicParam;
+    my $recurse;
+    my @webNames;
+
+    if ( defined &Foswiki::Func::getRequestObject ) {
+        $query = Foswiki::Func::getRequestObject();
+    }
+    else {
+        $query = Foswiki::Func::getCgiQuery();
+    }
+    $webParam =
+         $query->param('updateweb')
+      || $Foswiki::cfg{SandboxWebName}
+      || 'Sandbox';
+    $topicParam = $query->param('updatetopic');
+    $recurse =
+      Foswiki::Func::isTrue( $query->param('recurse'), ( $webParam eq 'all' ) );
+    if ($recurse) {
+
+        if ( $webParam eq 'all' ) {
+            $webParam = undef;
+        }
+        @webNames = Foswiki::Func::getListOfWebs( '', $webParam );
+    }
+    unshift( @webNames, $webParam ) if ( defined($webParam) );
+
+    my $result = "<pre>\nImporting:\n";
+    foreach my $web (@webNames) {
+        my @topics;
+        my $count = 0;
+
+        if ($topicParam) {
+            @topics = ($topicParam);
+        }
+        else {
+            @topics = Foswiki::Func::getTopicList($web);
+        }
+        $result .= "$web\n";
+        foreach my $topic (@topics) {
+            my ($topicObj) = Foswiki::Func::readTopic( $web, $topic );
+
+            if ( $topicObj->haveAccess('CHANGE') ) {
+                my $text    = $topicObj->getEmbeddedStoreForm();
+                my $oldtext = $text;
+
+                beforeSaveHandler( $text, $topic, $web, $topicObj );
+                if ( $topicObj->count('LINK') or $topicObj->count('SLVALUE') ) {
+                    my $newtext = $topicObj->getEmbeddedStoreForm();
+
+                    #$result .= "\t$topic has data :-)\n";
+                    if ( $newtext ne $oldtext ) {
+                        $result .= "\t$topic update\n";
+                        $topicObj->save();
+                    }
+                    else {
+
+                        #$result .= "\t$topic remains unchanged\n";
+                    }
+                }
+            }
+            else {
+                $result .= "\nFAILED: no permission to CHANGE $web.$topic\n\n";
+            }
+            if ( ( $count % 1000 ) == 0 ) {
+                $result .= "\tRe-parsed $count (doing $topic)...\n";
+            }
+            $count += 1;
+        }
+    }
+    return $result . "\n\n</pre>";
 }
 
 1;
@@ -342,8 +565,8 @@ sub stashLink {
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 
-Copyright (C) 2010 Paul.W.Harvey@csiro.au, http://trin.org.au
-Copyright (C) 2010 Foswiki Contributors. Foswiki Contributors
+Copyright (C) 2010-2011 Paul.W.Harvey@csiro.au, http://trin.org.au
+Copyright (C) 2010-2011 Foswiki Contributors. Foswiki Contributors
 are listed in the AUTHORS file in the root of this distribution.
 NOTE: Please extend that file, not this notice.
 

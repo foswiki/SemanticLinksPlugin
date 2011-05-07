@@ -1,22 +1,22 @@
 %TMPL:DEF{"SemanticLinksPlugin::Link"}%<a \
     class="foswikiSemanticLinksPlugin" \
-    href="%SCRIPTURLPATH{"view"}%/$valueweb/$valuetopic$valueqquery$valueaanchor" \
-    title="$property">$valuetopic</a>%TMPL:END%
+    href="%SCRIPTURLPATH{"view"}%/$value(web)/$value(topic)$value(qquery)$value(aanchor)" \
+    title="$property">$value(topic)</a>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::LinkWithText"}%<a \
     class="foswikiSemanticLinksPlugin" \
-    href="%SCRIPTURLPATH{"view"}%/$valueweb/$valuetopic$valueqquery$valueaanchor" \
+    href="%SCRIPTURLPATH{"view"}%/$value(web)/$value(topic)$value(qquery)$value(aanchor)" \
     title="$property">$text</a>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MissingLink"}%<span \
-    class="foswikiNewLink foswikiSemanticLinksPlugin">$valueweb.$valuetopic
+    class="foswikiNewLink foswikiSemanticLinksPlugin">$value(web).$value(topic)
         <a \
-            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            href="%SCRIPTURLPATH{"edit"}%/$value(web)/$value(topic)?topicparent=%WEB%.%TOPIC%" \
             rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
         </a>
     </span>%TMPL:END%
 %TMPL:DEF{"SemanticLinksPlugin::MissingLinkWithText"}%<span \
     class="foswikiNewLink foswikiSemanticLinksPlugin">$text
         <a \
-            href="%SCRIPTURLPATH{"edit"}%/$valueweb/$valuetopic?topicparent=%WEB%.%TOPIC%" \
+            href="%SCRIPTURLPATH{"edit"}%/$value(web)/$value(topic)?topicparent=%WEB%.%TOPIC%" \
             rel="nofollow" title="%MAKETEXT{"Create this topic"}%">?
         </a>
     </span>%TMPL:END%
