@@ -297,8 +297,6 @@ sub beforeSaveHandler {
 
     $hardvars{WEB}   = $Foswiki::Plugins::SESSION->{webName};
     $hardvars{TOPIC} = $Foswiki::Plugins::SESSION->{topicName};
-    ( $hardvars{BASEWEB}, $hardvars{BASETOPIC} ) =
-      Foswiki::Plugins::SemanticLinksPlugin::getBase();
 
     # Expand prefs
     $text =~ s/(%([A-Z]+)%)/
