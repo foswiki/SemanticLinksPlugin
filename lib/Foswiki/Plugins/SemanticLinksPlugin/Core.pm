@@ -20,6 +20,7 @@ my %nsemanticlinks;
 my %links;
 my $nlinks;
 my $restResult;
+my $baseWeb;
 
 #From Foswiki::Render
 my $STARTWW  = qr/^|(?<=[\s\(])/m;
@@ -295,8 +296,11 @@ sub getTemplate {
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
-    $hardvars{WEB}   = $Foswiki::Plugins::SESSION->{webName};
-    $hardvars{TOPIC} = $Foswiki::Plugins::SESSION->{topicName};
+    $hardvars{WEB}       = $web;
+    $hardvars{TOPIC}     = $topic;
+    $hardvars{BASEWEB}   = $web;
+    $hardvars{BASETOPIC} = $topic;
+    $baseWeb             = $web;
 
     # Expand prefs
     $text =~ s/(%([A-Z]+)%)/
@@ -360,7 +364,7 @@ sub stashPlainLink {
             and $address =~ /^$Foswiki::regex{abbrevRegex}$/
             and not Foswiki::Func::topicExists(
                 Foswiki::Func::normalizeWebTopicName(
-                    $Foswiki::Plugins::SESSION->{webName}, $address
+                    $baseWeb || $Foswiki::Plugins::SESSION->{webName}, $address
                 )
             )
           )
@@ -368,8 +372,9 @@ sub stashPlainLink {
             $dostash = 0;
         }
         if ($dostash) {
-            my ( $web, $topic, $rev ) = Foswiki::Func::normalizeWebTopicName(
-                $Foswiki::Plugins::SESSION->{webName}, $address );
+            my ( $web, $topic, $rev ) =
+              Foswiki::Func::normalizeWebTopicName( $baseWeb
+                  || $Foswiki::Plugins::SESSION->{webName}, $address );
             my $name = $web . '__' . $topic;
 
             if ( defined $rev ) {
@@ -636,14 +641,8 @@ sub _checkHash {
 
         if (
             exists $B->{$aKey}
-            and (
-                (
-                        defined $aValue
-                    and defined $bValue
-                    and $aValue eq $bValue
-                )
-                or not( defined $aValue or defined $bValue )
-            )
+            and ( ( defined $aValue and defined $bValue and $aValue eq $bValue )
+                or not( defined $aValue or defined $bValue ) )
           )
         {
 
