@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1288146085" format="1.1" version="1"}%
+%META:TOPICINFO{author="PaulHarvey" comment="save topic" date="1305011873" format="1.1" reprev="1" version="1"}%
 %META:TOPICPARENT{name="Plugins"}%
 ---+ !SemanticLinks Plugin
 
@@ -137,6 +137,7 @@ These tokens apply:
 | =$property=        | !Example.Property               | Property part (LHS of '::')    |
 | =$property(web)=   | !Example                        | Web part of the property       |
 | =$property(topic)= | !Property                       | Topic part of the property     |
+| =$property(seq)=   | 3                               | Values are counted against properties, starting from 1. Property name + sequence no. forms the unique name for each =META:SLVALUE=. Same as =META:SLVALUE.propertyseq= |
 | =$value=           | !System.UserDocumentationCategory?query=part#AnchorPart \
                                                        | Value part (RHS of '::')       |
 | =$value(web)=      | !System                         | Web part of the value          |
@@ -147,8 +148,9 @@ These tokens apply:
 | =$value(aanchor)=  | #AnchorPart                     | Anchor part, prefixed with '#' |
 
 ---+++ Example: Default DEFs overridden from property topic
-=SemanticLinksPlugin::LinkWithText= used from the [[System.SemanticIsPartOf]] topic
-<verbatim class="tml">[[%SYSTEMWEB%.SemanticIsPartOf::%SYSTEMWEB%.UserDocumentationCategory?query=something#anchor][Example text]]</verbatim>
+In accordance with the template path rules described above, the link below will be rendered using the =SemanticLinksPlugin::LinkWithText= =TMPL:DEF= contained within [[System.SemanticIsPartOf]].
+
+<verbatim class="tml">[[SemanticIsPartOf::UserDocumentationCategory?query=something#anchor][Example text]]</verbatim>
 Preview:
 <blockquote>[[%SYSTEMWEB%.SemanticIsPartOf::%SYSTEMWEB%.UserDocumentationCategory?query=something#anchor][Example text]]</blockquote>
 
@@ -156,18 +158,18 @@ Preview:
 =SemanticLinksPlugin::MyRDF::LinkWithText= used from the property topic
 <!-- %STARTSECTION{"myrdfdemo"}%<?xml version="1.0"?>
 <rdf:RDF \
-	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" \
-	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" \
-	xmlns:dct="http://purl.org/dc/terms/1.1/" \
-	xmlns:dc="http://purl.org/dc/elements/1.1/" \
-	xmlns:dcq="http://purl.org/dc/qualifiers/1.1/">
-	<rdf:Description rdf:about="%TOPICURL%">
-		<dc:Title><literal>%TOPIC%</literal></dc:Title>
-		<dc:Creator>%SEARCH{"1" type="query" topic="%TOPIC%" nonoise="on" format="$createwikiname"}%</dc:Creator>
-		<dc:Type>Text.Article</dc:Type>
-		<dc:Format>text/html</dc:Format>
-		[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]
-	</rdf:Description>
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" \
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" \
+    xmlns:dct="http://purl.org/dc/terms/1.1/" \
+    xmlns:dc="http://purl.org/dc/elements/1.1/" \
+    xmlns:dcq="http://purl.org/dc/qualifiers/1.1/">
+    <rdf:Description rdf:about="%TOPICURL%">
+        <dc:Title><literal>%TOPIC%</literal></dc:Title>
+        <dc:Creator>%SEARCH{"1" type="query" topic="%TOPIC%" nonoise="on" format="$createwikiname"}%</dc:Creator>
+        <dc:Type>Text.Article</dc:Type>
+        <dc:Format>text/html</dc:Format>
+        [[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]
+    </rdf:Description>
 </rdf:RDF>%ENDSECTION{"myrdfdemo"}% -->
 <verbatim class="tml">[[System.SemanticIsPartOf::System.UserDocumentationCategory][User documentation]]</verbatim>
 Previews:
@@ -192,11 +194,11 @@ If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], i
 <verbatim class="tml">Frogs [[Eat::Flies][eat flies]], [[Eat::Mosquitos][mosquitos]]
 and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
 <verbatim class="tml">
- %META:SLPROPERTY{     name="Eat"                         values="Flies,Mosquitos" num="2"      }%
- %META:SLVALUE{name="Eat__1"    property="Eat"    value="Flies"                         }%
- %META:SLVALUE{name="Eat__2"    property="Eat"    value="Mosquitos"                     }%
- %META:SLPROPERTY{     name="PreyOf"                      values="Snakes"          num="1"      }%
- %META:SLVALUE{name="PreyOf__1" property="PreyOf" value="Snakes"                        }%</verbatim>
+ %META:SLPROPERTY{name="Eat"                         values="Flies,Mosquitos" num="2"}%
+ %META:SLVALUE{   name="Eat__1"    property="Eat"     value="Flies"                  }%
+ %META:SLVALUE{   name="Eat__2"    property="Eat"     value="Mosquitos"              }%
+ %META:SLPROPERTY{name="PreyOf"                      values="Snakes"          num="1"}%
+ %META:SLVALUE{   name="PreyOf__1" property="PreyOf"  value="Snakes"                 }%</verbatim>
 
 A complete list of properties on a given topic may be obtained using:
 <verbatim class="tml">%QUERY{"slproperties.name"}%</verbatim>
@@ -280,11 +282,12 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 ---++ Plugin Info
 
 |  Author: | Foswiki:Main.PaulHarvey |
-|  Copyright: | © 2010-2011, [[http://www.taxonomy.org.au][Taxonomy Research & Information Network]], Foswiki Contributors |
+|  Copyright: | &copy; 2010-2011, [[http://www.taxonomy.org.au][Taxonomy Research & Information Network]], Foswiki Contributors |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  10 May 2011 (2.0.1) | Foswikitask:Item9961 - Implement =$property(seq)= token & documented |
 |  07 May 2011 (2.0.0) | Foswikitask:Item9961 - %X% __Breaking compatibility__ %BR% \
                          - %X% Deleted =META:SLPROPERTIES=. Use =%<nop>QUERY{"slproperties.name"}%= for a list of property names %BR% \
                          - %X% Renamed =META:SLPROPERTYVALUE= to =META:SLVALUE=. Use the [[#RestScript][rest script]] to update your topics. %BR% \
@@ -299,47 +302,41 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
 
-%META:LINK{name="23" address="http://foswiki.org/Extensions/WebHome" scope="external" type="autolink"}%
-%META:LINK{name="25" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
-%META:LINK{name="17" address="Main.WebHome" scope="internal" topic="WebHome" type="bracket" web="Main"}%
-%META:LINK{name="6" address="Main.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="Main"}%
-%META:LINK{name="26" address="Main.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="Main"}%
-%META:LINK{name="33" address="Main.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="Main"}%
-%META:LINK{name="12" address="Main.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="Main"}%
-%META:LINK{name="10" address="Main.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="Main"}%
-%META:LINK{name="32" address="Main.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="Main"}%
-%META:LINK{name="29" address="Main.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="Main"}%
-%META:LINK{name="7" address="Main.Macros" scope="internal" topic="Macros" type="bracket" web="Main"}%
-%META:LINK{name="18" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
-%META:LINK{name="5" address="Main.Snakes" scope="internal" topic="Snakes" type="semantic" web="Main"}%
-%META:LINK{name="3" address="Main.Mosquitos" scope="internal" topic="Mosquitos" type="semantic" web="Main"}%
-%META:LINK{name="2" address="Main.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="Main"}%
-%META:LINK{name="14" address="Main.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="Main"}%
-%META:LINK{name="4" address="Main.Flies" scope="internal" topic="Flies" type="semantic" web="Main"}%
-%META:LINK{name="11" address="Main.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="Main"}%
-%META:LINK{name="16" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
-%META:LINK{name="27" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
-%META:LINK{name="8" address="Main.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="Main"}%
-%META:LINK{name="1" address="System.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="System"}%
-%META:LINK{name="30" address="Main.MetaData" scope="internal" topic="MetaData" type="autolink" web="Main"}%
-%META:LINK{name="22" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
-%META:LINK{name="9" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
-%META:LINK{name="13" address="Main.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="Main"}%
-%META:LINK{name="21" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
-%META:LINK{name="28" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
-%META:LINK{name="24" address="http://foswiki.org/Support/WebHome" scope="external" type="autolink"}%
-%META:LINK{name="20" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
-%META:LINK{name="19" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/WebHome.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/WebHome"}%
-%META:LINK{name="31" address="Main.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="Main"}%
-%META:LINK{name="15" address="Main.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="Main"}%
+%META:LINK{name="19" address="System.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="System"}%
+%META:LINK{name="18" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
+%META:LINK{name="24" address="System.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="System"}%
+%META:LINK{name="20" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
+%META:LINK{name="3" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
+%META:LINK{name="16" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="11" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="bracket" web="System"}%
+%META:LINK{name="4" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
+%META:LINK{name="10" address="System.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="System"}%
+%META:LINK{name="25" address="System.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="System"}%
+%META:LINK{name="15" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
+%META:LINK{name="1" address="System.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="System"}%
+%META:LINK{name="2" address="System.Macros" scope="internal" topic="Macros" type="bracket" web="System"}%
+%META:LINK{name="12" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
+%META:LINK{name="21" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
+%META:LINK{name="17" address="http://foswiki.org/Extensions/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="23" address="System.ACRONYM" scope="internal" topic="ACRONYM" type="autolink" web="System"}%
+%META:LINK{name="22" address="System.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="System"}%
+%META:LINK{name="6" address="System.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="System"}%
+%META:LINK{name="5" address="System.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="System"}%
+%META:LINK{name="14" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
+%META:LINK{name="8" address="System.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="System"}%
+%META:LINK{name="7" address="System.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="System"}%
+%META:LINK{name="9" address="System.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="System"}%
+%META:LINK{name="13" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin"}%
 %META:SLPROPERTY{name="System.SemanticIsPartOf" num="1" values="System.UserDocumentationCategory"}%
 %META:SLPROPERTY{name="Example.Property" num="1" values="UserDocumentationCategory"}%
 %META:SLPROPERTY{name="Eat" num="2" values="Mosquitos,Flies"}%
 %META:SLPROPERTY{name="PreyOf" num="1" values="Snakes"}%
 %META:SLPROPERTY{name="IsPartOf" num="1" values="UserDocumentationCategory"}%
+%META:SLPROPERTY{name="SemanticIsPartOf" num="1" values="UserDocumentationCategory"}%
 %META:SLVALUE{name="System.SemanticIsPartOf__1" anchor="anchor" property="System.SemanticIsPartOf" propertyseq="1" query="query=something" text="User documentation" value="System.UserDocumentationCategory"}%
 %META:SLVALUE{name="Example.Property__1" anchor="AnchorPart" property="Example.Property" propertyseq="1" query="query=part" text="Example text" value="UserDocumentationCategory"}%
 %META:SLVALUE{name="Eat__2" property="Eat" propertyseq="2" text="mosquitos" value="Mosquitos"}%
 %META:SLVALUE{name="Eat__1" property="Eat" propertyseq="1" text="eat flies" value="Flies"}%
 %META:SLVALUE{name="PreyOf__1" property="PreyOf" propertyseq="1" text="preyed on by snakes" value="Snakes"}%
 %META:SLVALUE{name="IsPartOf__1" property="IsPartOf" propertyseq="1" text="docs::misc" value="UserDocumentationCategory"}%
+%META:SLVALUE{name="SemanticIsPartOf__1" anchor="anchor" property="SemanticIsPartOf" propertyseq="1" query="query=something" text="Example text" value="UserDocumentationCategory"}%

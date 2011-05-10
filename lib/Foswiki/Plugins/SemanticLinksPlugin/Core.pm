@@ -10,6 +10,7 @@ package Foswiki::Plugins::SemanticLinksPlugin::Core;
 use strict;
 use warnings;
 
+use Assert;
 use Foswiki::Func ();    # The plugins API
 use Foswiki::Plugins();
 use Data::Dumper;
@@ -37,45 +38,62 @@ my %hardvars = (
     TRASHWEB        => $Foswiki::cfg{TrashWebName},
     SANDBOXWEB      => $Foswiki::cfg{SandboxWebName}
 );
-
-# @attrs = ( $property, $value, $valuequery, $valueanchor, $metaproperties,
-#            $text, $propertyweb, $propertytopic, $valueweb, $valuetopic )
+my (
+    $PROPERTY,          #0
+    $VALUE,             #1
+    $VALUEQUERY,        #2
+    $VALUEANCHOR,       #3
+    $METAPROPERTIES,    #4
+    $TEXT,              #5
+    $PROPERTYWEB,       #6
+    $PROPERTYTOPIC,     #7
+    $VALUEWEB,          #8
+    $VALUETOPIC,        #9
+    $PROPERTYSEQ        #10
+) = ( 0 .. 10 );
 my %tokenidents = (
-    property => {
-        _     => 0,
-        web   => 6,
-        topic => 7
+    '$property' => {
+        _     => $PROPERTY,
+        web   => $PROPERTYWEB,
+        topic => $PROPERTYTOPIC,
+        seq   => $PROPERTYSEQ
     },
-    propertyweb   => 6,
-    propertytopic => 7,
-    value         => {
+    '$propertyweb'   => $PROPERTYWEB,
+    '$propertytopic' => $PROPERTYTOPIC,
+    '$value'         => {
         _prefixes => {
             qquery  => '?',
             aanchor => '#'
         },
-        _       => 1,
-        query   => 2,
-        qquery  => 2,
-        anchor  => 3,
-        aanchor => 3,
-        web     => 8,
-        topic   => 9
+        _       => $VALUE,
+        query   => $VALUEQUERY,
+        qquery  => $VALUEQUERY,
+        anchor  => $VALUEANCHOR,
+        aanchor => $VALUEANCHOR,
+        web     => $VALUEWEB,
+        topic   => $VALUETOPIC
     },
     _prefixes => {
         valueqquery  => '?',
         valueaanchor => '#'
     },
-    valueweb     => 8,
-    valuetopic   => 9,
-    valuequery   => 2,
-    valueqquery  => 2,
-    valueanchor  => 3,
-    valueaanchor => 3,
-    text         => 5
+    '$valueweb'     => $VALUEWEB,
+    '$valuetopic'   => $VALUETOPIC,
+    '$valuequery'   => $VALUEQUERY,
+    '$valueqquery'  => $VALUEQUERY,
+    '$valueanchor'  => $VALUEANCHOR,
+    '$valueaanchor' => $VALUEANCHOR,
+    '$text'         => $TEXT
 );
 
 sub init {
-    %templates = ();
+    %templates      = ();
+    %semanticlinks  = ();
+    %nsemanticlinks = ();
+    %links          = ();
+    $nlinks         = undef;
+    $restResult     = undef;
+    $baseWeb        = undef;
 }
 
 =begin TML
@@ -101,6 +119,10 @@ sub preRenderingHandler {
 
         # SMELL: are we really being called from beforeSaveHandler()?
         $linkHandler = \&stashSemLink;
+    }
+    else {
+        %semanticlinks  = ();
+        %nsemanticlinks = ();
     }
 
     # You can work on $text in place by using the special perl
@@ -131,19 +153,21 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\
 # the property topic. For now you can cheat by using your own
 # SemanticLinksPlugin::MissingLink template on the property topic.
 sub renderLink {
-
-#my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text ) = @_;
     my (@attrs) = @_;
-    my $topicWeb = $Foswiki::Plugins::SESSION->{webName};
-    my ( $propertyweb, $propertytopic ) =
-      Foswiki::Func::normalizeWebTopicName( $topicWeb, $attrs[0] );
-    my ( $valueweb, $valuetopic ) =
-      Foswiki::Func::normalizeWebTopicName( $topicWeb, $attrs[1] );
+    my ( $propertyweb, $propertytopic ) = Foswiki::Func::normalizeWebTopicName(
+        $Foswiki::Plugins::SESSION->{webName},
+        $attrs[$PROPERTY] );
+    my ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
+        $Foswiki::Plugins::SESSION->{webName},
+        $attrs[$VALUE] );
+    my $semlink = _getSemLinkData( $attrs[$PROPERTY], $attrs[$VALUE] );
     my $templatetxt;
     my $tmplName = '';
 
-    push( @attrs, $propertyweb, $propertytopic, $valueweb, $valuetopic );
-    if ( $attrs[5] ) {
+    push( @attrs,
+        $propertyweb, $propertytopic, $valueweb, $valuetopic,
+        $semlink->{propertyseq} );
+    if ( $attrs[$TEXT] ) {
         $tmplName = 'WithText';
     }
     if ( Foswiki::Func::topicExists( $valueweb, $valuetopic ) ) {
@@ -155,7 +179,7 @@ sub renderLink {
 
     $templatetxt = getTemplate( $propertyweb, $propertytopic, $tmplName );
     $templatetxt =~
-s/\$([a-z]+)(\(\s*([^\)]+)\s*\))?/_expandToken($1, $3, \@attrs, \%tokenidents )/ge;
+s/(\$[a-z]+)(\(\s*([^\)]+)\s*\))?/_expandToken($1, $3, \@attrs, \%tokenidents )/ge;
 
     return Foswiki::Func::expandCommonVariables($templatetxt);
 }
@@ -164,30 +188,32 @@ sub _expandToken {
     my ( $token, $args, $attrs, $ident ) = @_;
     my $val;
 
-    if ( defined $token ) {
-        if ( exists $ident->{$token} ) {
-            $val = $ident->{$token};
-            if ( ref($val) eq 'CODE' ) {
-                $val = $val->( $attrs->[ $ident->{_} ] );
-            }
-            elsif ( ref($val) eq 'HASH' ) {
-                $val = _expandToken( $args || '_', undef, $attrs, $val );
-            }
-            else {
-                $val = $attrs->[$val] || '';
-            }
-            if (    exists $ident->{_prefixes}
-                and exists $ident->{_prefixes}->{$token} )
-            {
-                $val = $ident->{_prefixes}->{$token} . $val;
-            }
+    ASSERT( ref($ident) eq 'HASH' )  if DEBUG;
+    ASSERT( ref($attrs) eq 'ARRAY' ) if DEBUG;
+    if ( exists $ident->{$token} ) {
+        $val = $ident->{$token};
+        if ( ref($val) eq 'HASH' ) {
+            $val = _expandToken( $args || '_', undef, $attrs, $val );
+        }
+        elsif ( not ref($val) ) {
+            $val = $attrs->[$val] || '';
+        }
+        elsif ( ref($val) eq 'CODE' ) {
+            ASSERT( exists $ident->{_} ) if DEBUG;
+            ASSERT( defined $attrs->[ $ident->{_} ] ) if DEBUG;
+            $val = $val->( $attrs->[ $ident->{_} ] );
         }
         else {
-            $val = '$' . $token;
+            ASSERT(0) if DEBUG;
+        }
+        if (    exists $ident->{_prefixes}
+            and exists $ident->{_prefixes}->{$token} )
+        {
+            $val = $ident->{_prefixes}->{$token} . $val;
         }
     }
     else {
-        $val = '';
+        $val = $token;
     }
 
     return $val;
@@ -406,9 +432,6 @@ sub semanticLinksSaveHandler {
     my @SLVALUE;
     my @properties;
 
-    %semanticlinks  = ();
-    %nsemanticlinks = ();
-
     # Instead of rendering, linkHandler will be set to stashSemLink() which
     # populates the %semanticlinks hash.
     preRenderingHandler( $_[0] );
@@ -459,9 +482,8 @@ sub semanticLinksSaveHandler {
     return;
 }
 
-sub stashSemLink {
-    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text )
-      = @_;
+sub _getSemLinkData {
+    my ( $property, $value ) = @_;
     my $semlink = $semanticlinks{$property}{$value};
 
     if ( not exists $nsemanticlinks{$property} ) {
@@ -474,6 +496,16 @@ sub stashSemLink {
         $semlink = {};
         $semanticlinks{$property}{$value} = $semlink;
     }
+    $semlink->{propertyseq} = $nsemanticlinks{$property};
+
+    return $semlink;
+}
+
+sub stashSemLink {
+    my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text )
+      = @_;
+    my $semlink = _getSemLinkData( $property, $value );
+
     if ($valuequery) {
         $semlink->{query} = $valuequery;
     }
@@ -483,7 +515,6 @@ sub stashSemLink {
     if ($text) {
         $semlink->{text} = $text;
     }
-    $semlink->{propertyseq} = $nsemanticlinks{$property};
 
     return '';
 }
