@@ -13,8 +13,8 @@ use warnings;
 use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
-our $VERSION = '$Rev$ (2011-05-06)';
-our $RELEASE = '2.0.1';
+our $VERSION = '$Rev$';
+our $RELEASE = '2.1.0';
 our $SHORTDESCRIPTION =
 'QuerySearch backlinks, and populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
@@ -57,15 +57,18 @@ sub initPlugin {
             'SLPROPERTY',
             alias   => 'slproperties',
             many    => 1,
-            require => [qw(name values)],
-            allow   => [qw(num)]
+            require => [qw(name)],
+            allow   => [qw(num values)]
         );
         Foswiki::Meta::registerMETA(
             'SLVALUE',
             alias   => 'slvalues',
             many    => 1,
             require => [qw(name value property)],
-            allow   => [qw(query anchor text propertyseq)]
+            allow   => [
+                qw(valueweb valuetopic valueaddress propertyweb propertyaddress),
+                qw(query anchor text propertyseq fragment)
+            ]
         );
         Foswiki::Meta::registerMETA(
             'LINK',

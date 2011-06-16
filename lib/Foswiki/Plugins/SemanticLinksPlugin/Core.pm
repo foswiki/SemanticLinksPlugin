@@ -13,11 +13,11 @@ use warnings;
 use Assert;
 use Foswiki::Func ();    # The plugins API
 use Foswiki::Plugins();
-use Data::Dumper;
 
 my %templates;
 my %semanticlinks;
 my %nsemanticlinks;
+my %metaproperties;
 my %links;
 my $nlinks;
 my $restResult;
@@ -88,6 +88,7 @@ my %tokenidents = (
 
 sub init {
     %templates      = ();
+    %metaproperties = ();
     %semanticlinks  = ();
     %nsemanticlinks = ();
     %links          = ();
@@ -123,6 +124,7 @@ sub preRenderingHandler {
     else {
         %semanticlinks  = ();
         %nsemanticlinks = ();
+        %metaproperties = ();
     }
 
     # You can work on $text in place by using the special perl
@@ -154,30 +156,31 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\
 # SemanticLinksPlugin::MissingLink template on the property topic.
 sub renderLink {
     my (@attrs) = @_;
-    my ( $propertyweb, $propertytopic ) = Foswiki::Func::normalizeWebTopicName(
-        $Foswiki::Plugins::SESSION->{webName},
-        $attrs[$PROPERTY] );
-    my ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
-        $Foswiki::Plugins::SESSION->{webName},
-        $attrs[$VALUE] );
     my $semlink = _getSemLinkData( $attrs[$PROPERTY], $attrs[$VALUE] );
     my $templatetxt;
     my $tmplName = '';
 
     push( @attrs,
-        $propertyweb, $propertytopic, $valueweb, $valuetopic,
+        $semlink->{propertyweb}, $semlink->{propertytopic},
+        $semlink->{valueweb},    $semlink->{valuetopic},
         $semlink->{propertyseq} );
     if ( $attrs[$TEXT] ) {
         $tmplName = 'WithText';
     }
-    if ( Foswiki::Func::topicExists( $valueweb, $valuetopic ) ) {
+    if (
+        Foswiki::Func::topicExists(
+            $semlink->{valueweb}, $semlink->{valuetopic}
+        )
+      )
+    {
         $tmplName = 'Link' . $tmplName;
     }
     else {
         $tmplName = 'MissingLink' . $tmplName;
     }
 
-    $templatetxt = getTemplate( $propertyweb, $propertytopic, $tmplName );
+    $templatetxt = getTemplate( $semlink->{propertyweb},
+        $semlink->{propertytopic}, $tmplName );
     $templatetxt =~
 s/(\$[a-z]+)(\(\s*([^\)]+)\s*\))?/_expandToken($1, $3, \@attrs, \%tokenidents )/ge;
 
@@ -327,6 +330,8 @@ sub beforeSaveHandler {
     $hardvars{BASEWEB}   = $web;
     $hardvars{BASETOPIC} = $topic;
     $baseWeb             = $web;
+    %links               = ();
+    $nlinks              = 1;
 
     # Expand prefs
     $text =~ s/(%([A-Z]+)%)/
@@ -340,8 +345,6 @@ sub beforeSaveHandler {
 sub plainLinksSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
-    %links  = ();
-    $nlinks = 1;
     $text =~
 s/\[\[[:]?\s*([^\]\n\?\#]+?)(\?([^\]\n\#]+?))?(\#([^\]\n]+?))?\s*\](\[([^\]\n]+?)\])?\]/stashPlainLink(undef, 'bracket', $1, $3, $5, $6)/ge;
 
@@ -428,49 +431,41 @@ sub stashPlainLink {
 
 sub semanticLinksSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
-    my @SLPROPERTY;
-    my @SLVALUE;
-    my @properties;
+    my @propertyaddresses;
 
     # Instead of rendering, linkHandler will be set to stashSemLink() which
     # populates the %semanticlinks hash.
     preRenderingHandler( $_[0] );
-    @properties = keys %semanticlinks;
 
-    if ( scalar(@properties) ) {
+    @propertyaddresses = keys %semanticlinks;
+    if ( scalar(@propertyaddresses) ) {
+        my @SLPROPERTY;
+        my @SLVALUE;
 
         # In a perfect world, we'd have query syntax sufficient to avoid needing
         # the SLPROPERTY type at all. For now, SLPROPERTIES can tell a wiki app
         # what distinct properties are present on a given topic.
-        foreach my $property (@properties) {
-
-            # As for SLPROPERTY, this can tell a wiki app what distinct values
-            # there are for a given property.
+        while ( my ( $property, $num ) = each %nsemanticlinks ) {
             push(
                 @SLPROPERTY,
                 {
-                    name   => $property,
-                    values => join( ',', keys %{ $semanticlinks{$property} } ),
-                    num    => scalar( keys %{ $semanticlinks{$property} } )
+                    name => $property,
+                    num  => $num
                 }
             );
-            foreach my $value ( keys %{ $semanticlinks{$property} } ) {
-                push(
-                    @SLVALUE,
-                    {
-                        name => $property . '__'
-                          . $semanticlinks{$property}{$value}->{propertyseq},
-                        property => $property,
-                        value    => $value,
-
-                        # query, anchor, text
-                        %{ $semanticlinks{$property}{$value} }
-                    }
-                );
-                stashPlainLink( 'internal', 'semantic', $value );
+        }
+        foreach my $propertyaddress (@propertyaddresses) {
+            while ( my ( $valueaddress, $VALUE ) =
+                each %{ $semanticlinks{$propertyaddress} } )
+            {
+                if ( $valueaddress ne '_topic' ) {
+                    delete $VALUE->{propertytopic};
+                    push( @SLVALUE, $VALUE );
+                    stashPlainLink( 'internal', 'semantic',
+                        $VALUE->{valueaddress} );
+                }
             }
         }
-
         $topicObject->putAll( 'SLPROPERTY', @SLPROPERTY );
         $topicObject->putAll( 'SLVALUE',    @SLVALUE );
 
@@ -484,19 +479,65 @@ sub semanticLinksSaveHandler {
 
 sub _getSemLinkData {
     my ( $property, $value ) = @_;
-    my $semlink = $semanticlinks{$property}{$value};
+    my $semlink;
+    my ( $propertyweb, $propertytopic ) =
+      Foswiki::Func::normalizeWebTopicName( $baseWeb
+          || $Foswiki::Plugins::SESSION->{webName}, $property );
+    my $propertyaddress = $propertyweb . '.' . $propertytopic;
+    my $valueaddress;
+    my $valueweb;
+    my $valuetopic;
 
-    if ( not exists $nsemanticlinks{$property} ) {
-        $nsemanticlinks{$property} = 1;
+    if ( not exists $metaproperties{DEFAULTWEB}{$propertyaddress} ) {
+        my ($propertyTopicObj) =
+          Foswiki::Func::readTopic( $propertyweb, $propertytopic );
+
+        if ( $propertyTopicObj->haveAccess('VIEW') ) {
+            my $defweb = $propertyTopicObj->get( 'SLVALUE',
+                'SemanticLinksPlugin_DEFAULTWEB__1' );
+            if ( $defweb->{value} ) {
+                $metaproperties{DEFAULTWEB}{$propertyaddress} =
+                  $defweb->{value};
+            }
+        }
+        else {
+
+            # Don't bother checking for VIEW access again
+            $metaproperties{DEFAULTWEB}{$propertyaddress} = undef;
+        }
+    }
+    ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
+        $metaproperties{DEFAULTWEB}{$propertyaddress}
+          || $baseWeb
+          || $Foswiki::Plugins::SESSION->{webName},
+        $value
+    );
+    $valueaddress = $valueweb . '.' . $valuetopic;
+    $semlink      = $semanticlinks{$propertyaddress}{$valueaddress};
+    if ( not exists $nsemanticlinks{$propertytopic} ) {
+        $nsemanticlinks{$propertytopic} = 1;
     }
     elsif ( not defined $semlink ) {
-        $nsemanticlinks{$property} += 1;
+        $nsemanticlinks{$propertytopic} += 1;
+    }
+    if ( not defined $semanticlinks{$propertyaddress}{_topic} ) {
+        $semanticlinks{$propertyaddress}{_topic} = $propertytopic;
     }
     if ( not defined $semlink ) {
-        $semlink = {};
-        $semanticlinks{$property}{$value} = $semlink;
+        $semlink = {
+            name     => $propertytopic . '__' . $nsemanticlinks{$propertytopic},
+            property => $property,
+            propertyaddress => $propertyaddress,
+            propertyweb     => $propertyweb,
+            propertytopic   => $propertytopic,
+            value           => $value,
+            valueaddress    => $valueaddress,
+            valueweb        => $valueweb,
+            valuetopic      => $valuetopic
+        };
+        $semanticlinks{$propertyaddress}{$valueaddress} = $semlink;
     }
-    $semlink->{propertyseq} = $nsemanticlinks{$property};
+    $semlink->{propertyseq} = $nsemanticlinks{$propertytopic};
 
     return $semlink;
 }
@@ -506,14 +547,8 @@ sub stashSemLink {
       = @_;
     my $semlink = _getSemLinkData( $property, $value );
 
-    if ($valuequery) {
-        $semlink->{query} = $valuequery;
-    }
     if ($valueanchor) {
-        $semlink->{anchor} = $valueanchor;
-    }
-    if ($text) {
-        $semlink->{text} = $text;
+        $semlink->{fragment} = $valueanchor;
     }
 
     return '';

@@ -1,4 +1,3 @@
-%META:TOPICINFO{author="PaulHarvey" comment="save topic" date="1305011873" format="1.1" reprev="1" version="1"}%
 %META:TOPICPARENT{name="Plugins"}%
 ---+ !SemanticLinks Plugin
 
@@ -190,15 +189,35 @@ Previews:
 If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], it should be able to plot a graph with the generated RDF similar to:
 <img alt="RDF graph of properties for !%TOPIC% topic" src="%ATTACHURLPATH%/dcdemo.png" width="941px" height="347px"/>
 
+---++ Special properties of property topics
+
+Property topics may themselves have semantic links on them ("meta-properties") to further refine their behaviour when these properties are used.
+
+---+++ !SemanticLinksPlugin_DEFAULTWEB
+
+This meta-property (property of the _property_ topic) specifies a default web context which is used when the _value_ part of the semantic link only contains a topic name without any web prefix (i.e. is not a fully-qualified topic address).
+
+Consider a property topic named Cite, which is used to cite a bibliography reference topic in some text which refers to it. The user types:
+<verbatim class="tml">[[Cite::Duke2006b]]</verbatim>
+
+This will only work if the bibliography topic !Duke2006b exists in the same web as the topic making the reference. However, it's usually desirable to have a dedicated web for holding bibliography topics, but then the user would have to type:
+<verbatim class="tml">[[Cite::MyProject/Bibliography.Duke2006b]]</verbatim>
+
+This can be solved by adding a !SemanticLinksPlugin_DEFAULTWEB meta-property on the Cite topic, as follows:
+<verbatim class="tml">[[SemanticLinksPlugin_DEFAULTWEB::MyProject/Bibliography]]</verbatim>
+
+With this in place, bibliography topics can exist in a dedicated subweb, and the user can still write <verbatim class="tml">[[Cite::Duke2006b]]</verbatim> to access them.
+
 ---++ Meta Data
 <verbatim class="tml">Frogs [[Eat::Flies][eat flies]], [[Eat::Mosquitos][mosquitos]]
 and are [[PreyOf::Snakes][preyed on by snakes]].</verbatim> on save, gives:
 <verbatim class="tml">
- %META:SLPROPERTY{name="Eat"                         values="Flies,Mosquitos" num="2"}%
- %META:SLVALUE{   name="Eat__1"    property="Eat"     value="Flies"                  }%
- %META:SLVALUE{   name="Eat__2"    property="Eat"     value="Mosquitos"              }%
- %META:SLPROPERTY{name="PreyOf"                      values="Snakes"          num="1"}%
- %META:SLVALUE{   name="PreyOf__1" property="PreyOf"  value="Snakes"                 }%</verbatim>
+ %META:SLPROPERTY{name="Eat"    num="2"}%
+ %META:SLVALUE{   name="Eat__2"      property="Eat"      propertyaddress="System.Eat"      propertyseq="2" propertyweb="System" value="Mosquitos" valueaddress="System.Mosquitos" valuetopic="Mosquitos" valueweb="System"}%
+ %META:SLVALUE{   name="Eat__1"      property="Eat"      propertyaddress="System.Eat"      propertyseq="2" propertyweb="System" value="Flies"     valueaddress="System.Flies"     valuetopic="Flies"     valueweb="System"}%
+ %META:SLPROPERTY{name="PreyOf" num="1"}%
+ %META:SLVALUE{   name="PreyOf__1"   property="PreyOf"   propertyaddress="System.PreyOf"   propertyseq="1" propertyweb="System" value="Snakes"    valueaddress="System.Snakes"    valuetopic="Snakes"    valueweb="System"}%
+ %META:SLVALUE{   name="IsPartOf__1" property="IsPartOf" propertyaddress="System.IsPartOf" propertyseq="1" propertyweb="System" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%</verbatim>
 
 A complete list of properties on a given topic may be obtained using:
 <verbatim class="tml">%QUERY{"slproperties.name"}%</verbatim>
@@ -209,11 +228,6 @@ A complete list of values for a given property may be obtained using:
 <verbatim class="tml">%QUERY{"slvalues[property='Eat'].value"}%</verbatim>
 Preview:
 <blockquote>%QUERY{"slvalues[property='Eat'].value"}%</blockquote>
-
-Or alternatively:
-<verbatim class="tml">%QUERY{"slproperties[name='Eat'].values"}%</verbatim>
-Preview:
-<blockquote>%QUERY{"slproperties[name='Eat'].values"}%</blockquote>
 
 And all values of all properties on the current topic could be rendered using:
 <verbatim class="tml">%FORMAT{
@@ -287,6 +301,12 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  16 Jun 2011 (2.1.0) | Foswikitask:Item10884 - Implement a 'meta-property' for property topics to control default web context on links only containing a topic name %BR%\
+                         - %X% Removed =META:SLPROPERTY.values= key. Query =META:SLVALUE.value= instead. %BR% \
+                         - %X% Renamed =META:SLVALUE.anchor= key to =META:SLVALUE.fragment=. %BR% \
+                         - %X% Removed =META:SLVALUE.query= and =META:SLVALUE.text= keys. %BR% \
+                         - %X% =META:SLPROPERTY.name= key is now always the topic part only. Web prefixes are stripped. %BR%\
+                         - Added =valueweb=, =valuetopic=, =valueaddress=, =propertyweb=, =propertytopic=, =propertyaddress= keys to =META:SLVALUE= type. |
 |  10 May 2011 (2.0.1) | Foswikitask:Item9961 - Implement =$property(seq)= token & documented |
 |  07 May 2011 (2.0.0) | Foswikitask:Item9961 - %X% __Breaking compatibility__ %BR% \
                          - %X% Deleted =META:SLPROPERTIES=. Use =%<nop>QUERY{"slproperties.name"}%= for a list of property names %BR% \
