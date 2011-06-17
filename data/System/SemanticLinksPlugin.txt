@@ -301,6 +301,7 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  17 Jun 2011 (2.1.1) | Foswikitask:Item10887 - Fix incorrect propertyseq values |
 |  16 Jun 2011 (2.1.0) | Foswikitask:Item10884 - Implement a 'meta-property' for property topics to control default web context on links only containing a topic name %BR%\
                          - %X% Removed =META:SLPROPERTY.values= key. Query =META:SLVALUE.value= instead. %BR% \
                          - %X% Renamed =META:SLVALUE.anchor= key to =META:SLVALUE.fragment=. %BR% \

@@ -533,11 +533,11 @@ sub _getSemLinkData {
             value           => $value,
             valueaddress    => $valueaddress,
             valueweb        => $valueweb,
-            valuetopic      => $valuetopic
+            valuetopic      => $valuetopic,
+	    propertyseq     => $nsemanticlinks{$propertytopic}
         };
         $semanticlinks{$propertyaddress}{$valueaddress} = $semlink;
     }
-    $semlink->{propertyseq} = $nsemanticlinks{$propertytopic};
 
     return $semlink;
 }
