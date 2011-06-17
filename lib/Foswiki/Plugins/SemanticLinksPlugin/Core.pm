@@ -466,6 +466,7 @@ sub semanticLinksSaveHandler {
                 }
             }
         }
+        @SLVALUE = sort { $a->{propertyseq} <=> $b->{propertyseq} } @SLVALUE;
         $topicObject->putAll( 'SLPROPERTY', @SLPROPERTY );
         $topicObject->putAll( 'SLVALUE',    @SLVALUE );
 
@@ -534,7 +535,7 @@ sub _getSemLinkData {
             valueaddress    => $valueaddress,
             valueweb        => $valueweb,
             valuetopic      => $valuetopic,
-	    propertyseq     => $nsemanticlinks{$propertytopic}
+            propertyseq     => $nsemanticlinks{$propertytopic}
         };
         $semanticlinks{$propertyaddress}{$valueaddress} = $semlink;
     }
