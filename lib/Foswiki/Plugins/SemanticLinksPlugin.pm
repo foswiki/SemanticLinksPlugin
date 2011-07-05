@@ -14,7 +14,7 @@ use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
 our $VERSION = '$Rev$';
-our $RELEASE = '2.1.2';
+our $RELEASE = '2.2.0';
 our $SHORTDESCRIPTION =
 'QuerySearch backlinks, and populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;
@@ -58,7 +58,7 @@ sub initPlugin {
             alias   => 'slproperties',
             many    => 1,
             require => [qw(name)],
-            allow   => [qw(num values)]
+            allow   => [qw(num values)]    # values is legacy
         );
         Foswiki::Meta::registerMETA(
             'SLVALUE',
@@ -67,7 +67,27 @@ sub initPlugin {
             require => [qw(name value property)],
             allow   => [
                 qw(valueweb valuetopic valueaddress propertyweb propertyaddress),
-                qw(query anchor text propertyseq fragment)
+                qw(propertyseq fragment),
+                qw(query anchor text)      # These are legacy
+            ]
+        );
+        Foswiki::Meta::registerMETA(
+            'SLMETAPROPERTY',
+            alias   => 'slmetaproperties',
+            many    => 1,
+            require => [qw(name)],
+            allow   => [qw(num)]
+        );
+        Foswiki::Meta::registerMETA(
+            'SLMETAVALUE',
+            alias   => 'slmetavalues',
+            many    => 1,
+            require => [qw(name value property)],
+            allow   => [
+                qw(valueweb valuetopic valueaddress propertyweb propertyaddress),
+                qw(propertyseq fragment),
+                qw(ofname ofvalueweb ofvaluetopic ofvalueaddress ofproperty),
+                qw(ofpropertyweb ofpropertyaddress ofpropertyseq offragment),
             ]
         );
         Foswiki::Meta::registerMETA(
