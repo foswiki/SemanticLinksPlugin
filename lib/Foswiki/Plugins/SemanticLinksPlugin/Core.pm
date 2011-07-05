@@ -92,7 +92,7 @@ sub init {
     %semanticlinks  = ();
     %nsemanticlinks = ();
     %links          = ();
-    $nlinks         = undef;
+    $nlinks         = 1;
     $restResult     = undef;
     $baseWeb        = undef;
 }
@@ -330,8 +330,10 @@ sub beforeSaveHandler {
     $hardvars{BASEWEB}   = $web;
     $hardvars{BASETOPIC} = $topic;
     $baseWeb             = $web;
-    %links               = ();
-    $nlinks              = 1;
+    $topicObject->remove('LINK');
+    $topicObject->remove('SLVALUE');
+    $topicObject->remove('SLPROPERTY');
+    $text = $topicObject->getEmbeddedStoreForm();
 
     # Expand prefs
     $text =~ s/(%([A-Z]+)%)/
@@ -604,6 +606,7 @@ sub restReparseHandler {
             my ($otopicObj) = Foswiki::Func::readTopic( $web, $topic );
 
             if ( $topicObj->haveAccess('CHANGE') ) {
+                init();
                 beforeSaveHandler( $topicObj->getEmbeddedStoreForm(),
                     $topic, $web, $topicObj );
                 if ( $topicObj->count('LINK') or $topicObj->count('SLVALUE') ) {

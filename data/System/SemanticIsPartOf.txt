@@ -36,3 +36,10 @@ Preview:
 <!--
    * Set SEMANTICLINKSPLUGIN_ENABLED = on
 -->
+%META:LINK{name="5" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="autolink" web="System"}%
+%META:LINK{name="1" address="System.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="System"}%
+%META:LINK{name="3" address="System.$property" scope="internal" topic="$property" type="bracket" web="System"}%
+%META:LINK{name="2" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
+%META:LINK{name="4" address="System.$value" scope="internal" topic="$value" type="bracket" web="System"}%
+%META:SLPROPERTY{name="SemanticIsPartOf" num="1"}%
+%META:SLVALUE{name="SemanticIsPartOf__1" property="System.SemanticIsPartOf" propertyaddress="System.SemanticIsPartOf" propertyseq="1" propertyweb="System" value="System.UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%

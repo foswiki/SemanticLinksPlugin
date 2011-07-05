@@ -301,6 +301,7 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  06 Jul 2011 (2.1.2) | Foswikitask:Item10913 - Fix missing init call in the reparse REST handler where, unless you only reparse an individual topic, pollutes topics with lots of bogus properties/values/links |
 |  17 Jun 2011 (2.1.1) | Foswikitask:Item10887 - Fix incorrect propertyseq values |
 |  16 Jun 2011 (2.1.0) | Foswikitask:Item10884 - Implement a 'meta-property' for property topics to control default web context on links only containing a topic name %BR%\
                          - %X% Removed =META:SLPROPERTY.values= key. Query =META:SLVALUE.value= instead. %BR% \
@@ -323,41 +324,51 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
 
-%META:LINK{name="19" address="System.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="System"}%
-%META:LINK{name="18" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
-%META:LINK{name="24" address="System.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="System"}%
-%META:LINK{name="20" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
-%META:LINK{name="3" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
-%META:LINK{name="16" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
-%META:LINK{name="11" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="bracket" web="System"}%
-%META:LINK{name="4" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
-%META:LINK{name="10" address="System.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="System"}%
-%META:LINK{name="25" address="System.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="System"}%
-%META:LINK{name="15" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
-%META:LINK{name="1" address="System.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="System"}%
-%META:LINK{name="2" address="System.Macros" scope="internal" topic="Macros" type="bracket" web="System"}%
-%META:LINK{name="12" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
-%META:LINK{name="21" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
-%META:LINK{name="17" address="http://foswiki.org/Extensions/SemanticLinksPlugin" scope="external" type="autolink"}%
-%META:LINK{name="23" address="System.ACRONYM" scope="internal" topic="ACRONYM" type="autolink" web="System"}%
-%META:LINK{name="22" address="System.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="System"}%
-%META:LINK{name="6" address="System.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="System"}%
-%META:LINK{name="5" address="System.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="System"}%
-%META:LINK{name="14" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
-%META:LINK{name="8" address="System.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="System"}%
-%META:LINK{name="7" address="System.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="System"}%
-%META:LINK{name="9" address="System.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="System"}%
-%META:LINK{name="13" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin"}%
-%META:SLPROPERTY{name="System.SemanticIsPartOf" num="1" values="System.UserDocumentationCategory"}%
-%META:SLPROPERTY{name="Example.Property" num="1" values="UserDocumentationCategory"}%
-%META:SLPROPERTY{name="Eat" num="2" values="Mosquitos,Flies"}%
-%META:SLPROPERTY{name="PreyOf" num="1" values="Snakes"}%
-%META:SLPROPERTY{name="IsPartOf" num="1" values="UserDocumentationCategory"}%
-%META:SLPROPERTY{name="SemanticIsPartOf" num="1" values="UserDocumentationCategory"}%
-%META:SLVALUE{name="System.SemanticIsPartOf__1" anchor="anchor" property="System.SemanticIsPartOf" propertyseq="1" query="query=something" text="User documentation" value="System.UserDocumentationCategory"}%
-%META:SLVALUE{name="Example.Property__1" anchor="AnchorPart" property="Example.Property" propertyseq="1" query="query=part" text="Example text" value="UserDocumentationCategory"}%
-%META:SLVALUE{name="Eat__2" property="Eat" propertyseq="2" text="mosquitos" value="Mosquitos"}%
-%META:SLVALUE{name="Eat__1" property="Eat" propertyseq="1" text="eat flies" value="Flies"}%
-%META:SLVALUE{name="PreyOf__1" property="PreyOf" propertyseq="1" text="preyed on by snakes" value="Snakes"}%
-%META:SLVALUE{name="IsPartOf__1" property="IsPartOf" propertyseq="1" text="docs::misc" value="UserDocumentationCategory"}%
-%META:SLVALUE{name="SemanticIsPartOf__1" anchor="anchor" property="SemanticIsPartOf" propertyseq="1" query="query=something" text="Example text" value="UserDocumentationCategory"}%
+%META:LINK{name="30" address="System.ACRONYM" scope="internal" topic="ACRONYM" type="autolink" web="System"}%
+%META:LINK{name="5" address="MyProject/Bibliography.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="MyProject/Bibliography"}%
+%META:LINK{name="28" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
+%META:LINK{name="14" address="System.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="System"}%
+%META:LINK{name="18" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="bracket" web="System"}%
+%META:LINK{name="2" address="System.Mosquitos" scope="internal" topic="Mosquitos" type="semantic" web="System"}%
+%META:LINK{name="22" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
+%META:LINK{name="8" address="System.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="System"}%
+%META:LINK{name="6" address="MyProject.Bibliography" scope="internal" topic="Bibliography" type="semantic" web="MyProject"}%
+%META:LINK{name="21" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
+%META:LINK{name="32" address="System.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="System"}%
+%META:LINK{name="20" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin"}%
+%META:LINK{name="7" address="System.Snakes" scope="internal" topic="Snakes" type="semantic" web="System"}%
+%META:LINK{name="16" address="System.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="System"}%
+%META:LINK{name="26" address="System.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="System"}%
+%META:LINK{name="27" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
+%META:LINK{name="25" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
+%META:LINK{name="17" address="System.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="System"}%
+%META:LINK{name="9" address="System.Macros" scope="internal" topic="Macros" type="bracket" web="System"}%
+%META:LINK{name="4" address="System.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="System"}%
+%META:LINK{name="31" address="System.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="System"}%
+%META:LINK{name="19" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
+%META:LINK{name="29" address="System.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="System"}%
+%META:LINK{name="24" address="http://foswiki.org/Extensions/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="13" address="System.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="System"}%
+%META:LINK{name="1" address="System.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="System"}%
+%META:LINK{name="12" address="System.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="System"}%
+%META:LINK{name="23" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="10" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
+%META:LINK{name="11" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
+%META:LINK{name="3" address="System.Flies" scope="internal" topic="Flies" type="semantic" web="System"}%
+%META:LINK{name="15" address="System.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="System"}%
+%META:SLPROPERTY{name="SemanticLinksPlugin_DEFAULTWEB" num="1"}%
+%META:SLPROPERTY{name="Cite" num="2"}%
+%META:SLPROPERTY{name="Eat" num="2"}%
+%META:SLPROPERTY{name="PreyOf" num="1"}%
+%META:SLPROPERTY{name="IsPartOf" num="1"}%
+%META:SLPROPERTY{name="SemanticIsPartOf" num="1"}%
+%META:SLPROPERTY{name="Property" num="1"}%
+%META:SLVALUE{name="SemanticIsPartOf__1" fragment="anchor" property="SemanticIsPartOf" propertyaddress="System.SemanticIsPartOf" propertyseq="1" propertyweb="System" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
+%META:SLVALUE{name="Property__1" fragment="AnchorPart" property="Example.Property" propertyaddress="Example.Property" propertyseq="1" propertyweb="Example" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
+%META:SLVALUE{name="Eat__1" property="Eat" propertyaddress="System.Eat" propertyseq="1" propertyweb="System" value="Flies" valueaddress="System.Flies" valuetopic="Flies" valueweb="System"}%
+%META:SLVALUE{name="Cite__1" property="Cite" propertyaddress="System.Cite" propertyseq="1" propertyweb="System" value="Duke2006b" valueaddress="System.Duke2006b" valuetopic="Duke2006b" valueweb="System"}%
+%META:SLVALUE{name="SemanticLinksPlugin_DEFAULTWEB__1" property="SemanticLinksPlugin_DEFAULTWEB" propertyaddress="System.SemanticLinksPlugin_DEFAULTWEB" propertyseq="1" propertyweb="System" value="MyProject/Bibliography" valueaddress="MyProject.Bibliography" valuetopic="Bibliography" valueweb="MyProject"}%
+%META:SLVALUE{name="PreyOf__1" property="PreyOf" propertyaddress="System.PreyOf" propertyseq="1" propertyweb="System" value="Snakes" valueaddress="System.Snakes" valuetopic="Snakes" valueweb="System"}%
+%META:SLVALUE{name="IsPartOf__1" property="IsPartOf" propertyaddress="System.IsPartOf" propertyseq="1" propertyweb="System" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
+%META:SLVALUE{name="Eat__2" property="Eat" propertyaddress="System.Eat" propertyseq="2" propertyweb="System" value="Mosquitos" valueaddress="System.Mosquitos" valuetopic="Mosquitos" valueweb="System"}%
+%META:SLVALUE{name="Cite__2" property="Cite" propertyaddress="System.Cite" propertyseq="2" propertyweb="System" value="MyProject/Bibliography.Duke2006b" valueaddress="MyProject/Bibliography.Duke2006b" valuetopic="Duke2006b" valueweb="MyProject/Bibliography"}%
