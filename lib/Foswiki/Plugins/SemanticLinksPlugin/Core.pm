@@ -17,7 +17,9 @@ use Foswiki::Plugins();
 my %templates;
 my %semanticlinks;
 my %nsemanticlinks;
-my %metaproperties;
+my %metasemanticlinks;
+my %metansemanticlinks;
+my %propertyattributes;
 my %links;
 my $nlinks;
 my $restResult;
@@ -39,17 +41,17 @@ my %hardvars = (
     SANDBOXWEB      => $Foswiki::cfg{SandboxWebName}
 );
 my (
-    $PROPERTY,          #0
-    $VALUE,             #1
-    $VALUEQUERY,        #2
-    $VALUEANCHOR,       #3
-    $METAPROPERTIES,    #4
-    $TEXT,              #5
-    $PROPERTYWEB,       #6
-    $PROPERTYTOPIC,     #7
-    $VALUEWEB,          #8
-    $VALUETOPIC,        #9
-    $PROPERTYSEQ        #10
+    $PROPERTY,              #0
+    $VALUE,                 #1
+    $VALUEQUERY,            #2
+    $VALUEANCHOR,           #3
+    $PROPERTYATTRIBUTES,    #4
+    $TEXT,                  #5
+    $PROPERTYWEB,           #6
+    $PROPERTYTOPIC,         #7
+    $VALUEWEB,              #8
+    $VALUETOPIC,            #9
+    $PROPERTYSEQ            #10
 ) = ( 0 .. 10 );
 my %tokenidents = (
     '$property' => {
@@ -87,14 +89,16 @@ my %tokenidents = (
 );
 
 sub init {
-    %templates      = ();
-    %metaproperties = ();
-    %semanticlinks  = ();
-    %nsemanticlinks = ();
-    %links          = ();
-    $nlinks         = 1;
-    $restResult     = undef;
-    $baseWeb        = undef;
+    %templates          = ();
+    %propertyattributes = ();
+    %semanticlinks      = ();
+    %nsemanticlinks     = ();
+    %metasemanticlinks  = ();
+    %metansemanticlinks = ();
+    %links              = ();
+    $nlinks             = 1;
+    $restResult         = undef;
+    $baseWeb            = undef;
 }
 
 =begin TML
@@ -122,9 +126,11 @@ sub preRenderingHandler {
         $linkHandler = \&stashSemLink;
     }
     else {
-        %semanticlinks  = ();
-        %nsemanticlinks = ();
-        %metaproperties = ();
+        %semanticlinks      = ();
+        %nsemanticlinks     = ();
+        %metasemanticlinks  = ();
+        %metansemanticlinks = ();
+        %propertyattributes = ();
     }
 
     # You can work on $text in place by using the special perl
@@ -443,6 +449,8 @@ sub semanticLinksSaveHandler {
     if ( scalar(@propertyaddresses) ) {
         my @SLPROPERTY;
         my @SLVALUE;
+        my @SLMETAPROPERTY;
+        my @SLMETAVALUE;
 
         # In a perfect world, we'd have query syntax sufficient to avoid needing
         # the SLPROPERTY type at all. For now, SLPROPERTIES can tell a wiki app
@@ -456,21 +464,53 @@ sub semanticLinksSaveHandler {
                 }
             );
         }
+        while ( my ( $property, $num ) = each %metansemanticlinks ) {
+            push(
+                @SLMETAPROPERTY,
+                {
+                    name => $property,
+                    num  => $num
+                }
+            );
+        }
         foreach my $propertyaddress (@propertyaddresses) {
             while ( my ( $valueaddress, $VALUE ) =
                 each %{ $semanticlinks{$propertyaddress} } )
             {
                 if ( $valueaddress ne '_topic' ) {
+                    my $metaprops =
+                      $metasemanticlinks{$propertyaddress}{$valueaddress};
+
                     delete $VALUE->{propertytopic};
                     push( @SLVALUE, $VALUE );
                     stashPlainLink( 'internal', 'semantic',
                         $VALUE->{valueaddress} );
+                    if ($metaprops) {
+                        ASSERT( ref($metaprops) eq 'HASH' ) if DEBUG;
+                        while ( my ( $metapropaddr, $metavals ) =
+                            each %{$metaprops} )
+                        {
+                            while ( my ( $metavaladdr, $meta ) =
+                                each %{$metavals} )
+                            {
+                                if ( $metavaladdr ne '_topic' ) {
+                                    push( @SLMETAVALUE, $meta );
+                                    stashPlainLink( 'internal', 'semanticmeta',
+                                        $meta->{valueaddress} );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         @SLVALUE = sort { $a->{propertyseq} <=> $b->{propertyseq} } @SLVALUE;
         $topicObject->putAll( 'SLPROPERTY', @SLPROPERTY );
         $topicObject->putAll( 'SLVALUE',    @SLVALUE );
+        @SLMETAVALUE =
+          sort { $a->{propertyseq} <=> $b->{propertyseq} } @SLMETAVALUE;
+        $topicObject->putAll( 'SLMETAPROPERTY', @SLMETAPROPERTY );
+        $topicObject->putAll( 'SLMETAVALUE',    @SLMETAVALUE );
 
         # These are unused legacy types
         $topicObject->putAll( 'SLPROPERTYVALUE', () );
@@ -491,7 +531,7 @@ sub _getSemLinkData {
     my $valueweb;
     my $valuetopic;
 
-    if ( not exists $metaproperties{DEFAULTWEB}{$propertyaddress} ) {
+    if ( not exists $propertyattributes{DEFAULTWEB}{$propertyaddress} ) {
         my ($propertyTopicObj) =
           Foswiki::Func::readTopic( $propertyweb, $propertytopic );
 
@@ -499,18 +539,18 @@ sub _getSemLinkData {
             my $defweb = $propertyTopicObj->get( 'SLVALUE',
                 'SemanticLinksPlugin_DEFAULTWEB__1' );
             if ( $defweb->{value} ) {
-                $metaproperties{DEFAULTWEB}{$propertyaddress} =
+                $propertyattributes{DEFAULTWEB}{$propertyaddress} =
                   $defweb->{value};
             }
         }
         else {
 
             # Don't bother checking for VIEW access again
-            $metaproperties{DEFAULTWEB}{$propertyaddress} = undef;
+            $propertyattributes{DEFAULTWEB}{$propertyaddress} = undef;
         }
     }
     ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
-        $metaproperties{DEFAULTWEB}{$propertyaddress}
+        $propertyattributes{DEFAULTWEB}{$propertyaddress}
           || $baseWeb
           || $Foswiki::Plugins::SESSION->{webName},
         $value
@@ -545,6 +585,90 @@ sub _getSemLinkData {
     return $semlink;
 }
 
+sub _getMetaSemLinkData {
+    my ( $property, $value, $of ) = @_;
+    my $ofpropaddr = $of->{propertyaddress};
+    my $ofvaladdr  = $of->{valueaddress};
+    my $metasemlink;
+    my ( $propertyweb, $propertytopic ) =
+      Foswiki::Func::normalizeWebTopicName( $baseWeb
+          || $Foswiki::Plugins::SESSION->{webName}, $property );
+    my $propertyaddress = $propertyweb . '.' . $propertytopic;
+    my $valueaddress;
+    my $valueweb;
+    my $valuetopic;
+
+    if ( not exists $propertyattributes{DEFAULTWEB}{$propertyaddress} ) {
+        my ($propertyTopicObj) =
+          Foswiki::Func::readTopic( $propertyweb, $propertytopic );
+
+        if ( $propertyTopicObj->haveAccess('VIEW') ) {
+            my $defweb = $propertyTopicObj->get( 'SLVALUE',
+                'SemanticLinksPlugin_DEFAULTWEB__1' );
+            if ( $defweb->{value} ) {
+                $propertyattributes{DEFAULTWEB}{$propertyaddress} =
+                  $defweb->{value};
+            }
+        }
+        else {
+
+            # Don't bother checking for VIEW access again
+            $propertyattributes{DEFAULTWEB}{$propertyaddress} = undef;
+        }
+    }
+    ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
+        $propertyattributes{DEFAULTWEB}{$propertyaddress}
+          || $baseWeb
+          || $Foswiki::Plugins::SESSION->{webName},
+        $value
+    );
+    $valueaddress = $valueweb . '.' . $valuetopic;
+    $metasemlink =
+      $metasemanticlinks{$ofpropaddr}{$ofvaladdr}{$propertyaddress}
+      {$valueaddress};
+    if ( not exists $metansemanticlinks{$propertytopic} ) {
+        $metansemanticlinks{$propertytopic} = 1;
+    }
+    elsif ( not defined $metasemlink ) {
+        $metansemanticlinks{$propertytopic} += 1;
+    }
+    if (
+        not
+        defined $metasemanticlinks{$ofpropaddr}{$ofvaladdr}{$propertyaddress}
+        {_topic} )
+    {
+        $metasemanticlinks{$ofpropaddr}{$ofvaladdr}{$propertyaddress}{_topic} =
+          $propertytopic;
+    }
+    if ( not defined $metasemlink ) {
+        $metasemlink = {
+            name => $propertytopic . '__' . $metansemanticlinks{$propertytopic},
+            property          => $property,
+            propertyaddress   => $propertyaddress,
+            propertyweb       => $propertyweb,
+            propertytopic     => $propertytopic,
+            value             => $value,
+            valueaddress      => $valueaddress,
+            valueweb          => $valueweb,
+            valuetopic        => $valuetopic,
+            propertyseq       => $metansemanticlinks{$propertytopic},
+            ofname            => $of->{name},
+            ofvalueweb        => $of->{valueweb},
+            ofvaluetopic      => $of->{valuetopic},
+            ofvalueaddress    => $of->{valueaddress},
+            ofproperty        => $of->{property},
+            ofpropertyweb     => $of->{propertyweb},
+            ofpropertyaddress => $of->{propertyaddress},
+            ofpropertyseq     => $of->{propertyseq},
+            offragment        => $of->{fragment}
+        };
+        $metasemanticlinks{$ofpropaddr}{$ofvaladdr}{$propertyaddress}
+          {$valueaddress} = $metasemlink;
+    }
+
+    return '';
+}
+
 sub stashSemLink {
     my ( $property, $value, $valuequery, $valueanchor, $metaproperties, $text )
       = @_;
@@ -552,6 +676,10 @@ sub stashSemLink {
 
     if ($valueanchor) {
         $semlink->{fragment} = $valueanchor;
+    }
+    if ($metaproperties) {
+        $metaproperties =~
+          s/\{\s*(.*?)::([^\}]+)\s*\}/_getMetaSemLinkData($1, $2, $semlink)/gem;
     }
 
     return '';
@@ -653,6 +781,9 @@ sub _different {
         $different = 1;
     }
     elsif ( _checkTHING( 'SLVALUE', $a, $b ) ) {
+        $different = 1;
+    }
+    elsif ( _checkTHING( 'METASLVALUE', $a, $b ) ) {
         $different = 1;
     }
 

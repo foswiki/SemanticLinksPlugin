@@ -66,8 +66,8 @@ sub initPlugin {
             many    => 1,
             require => [qw(name value property)],
             allow   => [
-                qw(valueweb valuetopic valueaddress propertyweb propertyaddress),
-                qw(propertyseq fragment),
+                qw(valueweb valuetopic valueaddress propertyweb propertytopic),
+                qw(propertyaddress propertyseq fragment),
                 qw(query anchor text)      # These are legacy
             ]
         );
@@ -84,8 +84,8 @@ sub initPlugin {
             many    => 1,
             require => [qw(name value property)],
             allow   => [
-                qw(valueweb valuetopic valueaddress propertyweb propertyaddress),
-                qw(propertyseq fragment),
+                qw(valueweb valuetopic valueaddress propertyweb propertytopic),
+                qw(propertyaddress propertyseq fragment),
                 qw(ofname ofvalueweb ofvaluetopic ofvalueaddress ofproperty),
                 qw(ofpropertyweb ofpropertyaddress ofpropertyseq offragment),
             ]
