@@ -331,6 +331,7 @@ sub getTemplate {
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
 
+    init();
     $hardvars{WEB}       = $web;
     $hardvars{TOPIC}     = $topic;
     $hardvars{BASEWEB}   = $web;
@@ -734,7 +735,6 @@ sub restReparseHandler {
             my ($otopicObj) = Foswiki::Func::readTopic( $web, $topic );
 
             if ( $topicObj->haveAccess('CHANGE') ) {
-                init();
                 beforeSaveHandler( $topicObj->getEmbeddedStoreForm(),
                     $topic, $web, $topicObj );
                 if ( $topicObj->count('LINK') or $topicObj->count('SLVALUE') ) {
