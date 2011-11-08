@@ -14,7 +14,7 @@ use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
 our $VERSION = '$Rev$';
-our $RELEASE = '2.2.0';
+our $RELEASE = '2.3.0';
 our $SHORTDESCRIPTION =
 'QuerySearch backlinks, and populate ad-hoc metadata using =[<nop>[Property::Value]]= Semantic !MediaWiki syntax';
 our $NO_PREFS_IN_TOPIC = 1;

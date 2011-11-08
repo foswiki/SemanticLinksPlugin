@@ -1,3 +1,4 @@
+%META:TOPICINFO{author="PaulHarvey" comment="pending" date="1320755618" format="1.1" version="2"}%
 %META:TOPICPARENT{name="Plugins"}%
 ---+ !SemanticLinks Plugin
 
@@ -6,77 +7,19 @@
 %TOC%
 
 ---++ PreferenceSettings
+---+++ Enable rendering: =RENDERING=
 Rendering of links is enabled by default, but can add unwanted CPU overhead. You may wish to disable the rendering by default (in %USERSWEB%.SitePreferences), and then only enable on webs where it's needed in these web's %WEBPREFSTOPIC% topics.
+
+*Example:*
 <verbatim class="tml">
    * Set SEMANTICLINKSPLUGIN_RENDERING = on
 </verbatim>
 
----++ %SYSTEMWEB%.QuerySearch backlinks
-When %TOPIC% is enabled, topics are saved with =META:LINK= %SYSTEMWEB%.MetaData containing (almost) all links contained in the topic content. The schema is as follows:
-   * type: ==META:LINK==
-   * alias: =links=
-   * keys:
-      * =name= - numeric index, in order of appearance in the topic content
-      * =address= - the (absolute) path in the link
-      * =scope= - internal or external
-      * =type= - autolink, semantic or bracket
-      * =web=, =topic= - for links of internal scope only
+---+++ Default web for property topics: =DEFAULT_PROPERTYWEB=
+*Example:*
+<verbatim class="tml">   * Set SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB = Applications/SemanticProperties</verbatim>
 
----+++ Notes
-   * %TOPIC% avoids duplicate addresses appearing in ==META:LINK==.
-   * %TOPIC% tries to capture links that would normally be rendered by Foswiki, including WikiWords and ACRONYM topics.
-   * %TOPIC% expands non-parameterised [[PreferenceSettings][preferences variables]] _only_ (I.E. [[Macros]] are ignored) before storing the link address. For example, on this topic, a link to =%<nop>WEB%.%<nop>TOPIC%= will be stored as =%WEB%.%TOPIC%=.
-
----+++ Example MetaData
-<verbatim class="tml">
-WebPreferences (or %WEBPREFSTOPIC%) produces:
-   * %META:LINK{name="1" scope="internal" type="autolink" web="System" topic="WebPreferences"   address="System.WebPreferences"}%
-[[PreyOf::Snakes]] produces:
-   * %META:LINK{name="2" scope="internal" type="semantic" web="System" topic="Snakes"           address="System.Snakes"}%
-[[SemanticIsPartOf]] produces:
-   * %META:LINK{name="3" scope="internal" type="bracket"  web="System" topic="SemanticIsPartOf" address="System.SemanticIsPartOf"}%
-http://foswiki.org/Support/SemanticLinksPlugin produces:
-   * %META:LINK{name="4" scope="external" type="autolink" address="http://foswiki.org/Support/SemanticLinksPlugin"}%
-[[http://www.w3.org/RDF/Validator/]] produces:
-   * %META:LINK{name="5" scope="external" type="bracket"  address="http://www.w3.org/RDF/Validator/"}%
-</verbatim>
----+++ Example backlinks SEARCH
-<verbatim class="tml">%SEARCH{
-  "links[address='%WEB%.%TOPIC%']"
-  type="query"
-  web="%SYSTEMWEB%"
-  header="Topics that link to %WEB%.%TOPIC%:"
-}%</verbatim>
----+++ Example list of links _out_ on a topic
-<verbatim class="tml"><noautolink>
-   * Links to other topics: %FORMAT{
-      "%QUERY{"links[scope='internal'].name"}%"
-      type="string"
-      header="$n"
-      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
-   }%
-   * External links: %FORMAT{
-      "%QUERY{"links[scope='external'].name"}%"
-      type="string"
-      header="$n"
-      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
-   }%
-</noautolink></verbatim>
-Preview:
-<noautolink>
-   * Links to other topics: %FORMAT{
-      "%QUERY{"links[scope='internal'].name"}%"
-      type="string"
-      header="$n"
-      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
-   }%
-   * External links: %FORMAT{
-      "%QUERY{"links[scope='external'].name"}%"
-      type="string"
-      header="$n"
-      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
-   }%
-</noautolink>
+See [[#AboutDEFAULTPROPERTYWEB]]
 ---++ Semantic links - syntax
 Use the following link syntax to create a special 'semantic' link. Semantic links are rendered using templates (see [[#Templates]]) but also populate special metadata (=META:SLPROPERTY=, see [[#Meta_Data]]).
 %STARTSECTION{"TopicSyntax"}% 
@@ -191,11 +134,9 @@ If you were to pass the resulting RDF to [[http://www.w3.org/RDF/Validator/]], i
 
 ---++ Special properties of property topics
 
-Property topics may themselves have semantic links on them ("meta-properties") to further refine their behaviour when these properties are used.
+---+++ =SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB= %SYSTEMWEB%.PreferenceSettings
 
----+++ !SemanticLinksPlugin_DEFAULTWEB
-
-This meta-property (property of the _property_ topic) specifies a default web context which is used when the _value_ part of the semantic link only contains a topic name without any web prefix (i.e. is not a fully-qualified topic address).
+These %SYSTEMWEB%.PreferenceSettings, which may be set on the _property topic_ specify the default web which is assumed when the _value_ or _property_ parts of the semantic link are topic names only, without any web prefix (i.e. are not fully-qualified topic addresses).
 
 Consider a property topic named Cite, which is used to cite a bibliography reference topic in some text which refers to it. The user types:
 <verbatim class="tml">[[Cite::Duke2006b]]</verbatim>
@@ -203,10 +144,16 @@ Consider a property topic named Cite, which is used to cite a bibliography refer
 This will only work if the bibliography topic !Duke2006b exists in the same web as the topic making the reference. However, it's usually desirable to have a dedicated web for holding bibliography topics, but then the user would have to type:
 <verbatim class="tml">[[Cite::MyProject/Bibliography.Duke2006b]]</verbatim>
 
-This can be solved by adding a !SemanticLinksPlugin_DEFAULTWEB meta-property on the Cite topic, as follows:
-<verbatim class="tml">[[SemanticLinksPlugin_DEFAULTWEB::MyProject/Bibliography]]</verbatim>
+This can be solved by adding a !SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB preference on the Cite topic, as follows:
+<verbatim class="tml">   * Set SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB = MyProject/Bibliography</verbatim>
 
 With this in place, bibliography topics can exist in a dedicated subweb, and the user can still write <verbatim class="tml">[[Cite::Duke2006b]]</verbatim> to access them.
+
+#AboutDEFAULTPROPERTYWEB
+---+++ =SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB= %SYSTEMWEB%.PreferenceSettings
+Similarly, you may collect useful _property topics_ into a common web which can be shared throughout your wiki by setting <verbatim class="tml">   * Set SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB = Applications/SemanticProperties</verbatim> in [[%LOCALSITEPREFS%]]
+
+With this setting, and the =Cite= property topic stored in =Applications/SemanticProperties= web, you may use <verbatim class="tml">[[Cite::...]]</verbatim> from anywhere in the wiki.
 
 ---++ Meta Data
 <verbatim class="tml">Frogs [[Eat::Flies][eat flies]], [[Eat::Mosquitos][mosquitos]]
@@ -252,6 +199,73 @@ And all values of all properties on the current topic could be rendered using:
     format=\"      * [[$dollarweb.$dollartopic][$dollartopic]] created $dollarcreatedate\"
   }$percent"
 }%
+
+---++ %SYSTEMWEB%.QuerySearch backlinks
+When %TOPIC% is enabled, topics are saved with =META:LINK= %SYSTEMWEB%.MetaData containing (almost) all links contained in the topic content. The schema is as follows:
+   * type: ==META:LINK==
+   * alias: =links=
+   * keys:
+      * =name= - numeric index, in order of appearance in the topic content
+      * =address= - the (absolute) path in the link
+      * =scope= - internal or external
+      * =type= - autolink, semantic or bracket
+      * =web=, =topic= - for links of internal scope only
+
+---+++ Notes
+   * %TOPIC% avoids duplicate addresses appearing in ==META:LINK==.
+   * %TOPIC% tries to capture links that would normally be rendered by Foswiki, including WikiWords and ACRONYM topics.
+   * %TOPIC% expands non-parameterised [[PreferenceSettings][preferences variables]] _only_ (I.E. [[Macros]] are ignored) before storing the link address. For example, on this topic, a link to =%<nop>WEB%.%<nop>TOPIC%= will be stored as =%WEB%.%TOPIC%=.
+
+---+++ Example MetaData
+<verbatim class="tml">
+WebPreferences (or %WEBPREFSTOPIC%) produces:
+   * %META:LINK{name="1" scope="internal" type="autolink" web="System" topic="WebPreferences"   address="System.WebPreferences"}%
+[[PreyOf::Snakes]] produces:
+   * %META:LINK{name="2" scope="internal" type="semantic" web="System" topic="Snakes"           address="System.Snakes"}%
+[[SemanticIsPartOf]] produces:
+   * %META:LINK{name="3" scope="internal" type="bracket"  web="System" topic="SemanticIsPartOf" address="System.SemanticIsPartOf"}%
+http://foswiki.org/Support/SemanticLinksPlugin produces:
+   * %META:LINK{name="4" scope="external" type="autolink" address="http://foswiki.org/Support/SemanticLinksPlugin"}%
+[[http://www.w3.org/RDF/Validator/]] produces:
+   * %META:LINK{name="5" scope="external" type="bracket"  address="http://www.w3.org/RDF/Validator/"}%
+</verbatim>
+---+++ Example backlinks SEARCH
+<verbatim class="tml">%SEARCH{
+  "links[address='%WEB%.%TOPIC%']"
+  type="query"
+  web="%SYSTEMWEB%"
+  header="Topics that link to %WEB%.%TOPIC%:"
+}%</verbatim>
+---+++ Example list of links _out_ on a topic
+<verbatim class="tml"><noautolink>
+   * Links to other topics: %FORMAT{
+      "%QUERY{"links[scope='internal'].name"}%"
+      type="string"
+      header="$n"
+      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
+   }%
+   * External links: %FORMAT{
+      "%QUERY{"links[scope='external'].name"}%"
+      type="string"
+      header="$n"
+      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
+   }%
+</noautolink></verbatim>
+Preview:
+<noautolink>
+   * Links to other topics: %FORMAT{
+      "%QUERY{"links[scope='internal'].name"}%"
+      type="string"
+      header="$n"
+      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
+   }%
+   * External links: %FORMAT{
+      "%QUERY{"links[scope='external'].name"}%"
+      type="string"
+      header="$n"
+      format="      * =$percntQUERY{\"links[name='$item'].address\"}$percnt= - $percntQUERY{\"links[name='$item'].type\"}$percnt link"
+   }%
+</noautolink>
 
 <!--%JQREQUIRE{"chili"}%
 One line description, required for extensions repository catalog.
@@ -301,6 +315,8 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History:     | <!-- versions below in reverse order --> |
+|  08 Nov 2011 (2.3.0) | Foswikitask:Item11243 - %X% __Breaking compatibility__ %BR% \
+                         - %X% Replaced =[<nop>[SemanticLinksPlugin_DEFAULTWEB::...]]= notation with =SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB= and introduced =SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB= %SYSTEMWEB%.PreferenceSettings |
 |  06 Jul 2011 (2.1.2) | Foswikitask:Item10913 - Fix missing init call in the reparse REST handler where, unless you only reparse an individual topic, pollutes topics with lots of bogus properties/values/links |
 |  17 Jun 2011 (2.1.1) | Foswikitask:Item10887 - Fix incorrect propertyseq values |
 |  16 Jun 2011 (2.1.0) | Foswikitask:Item10884 - Implement a 'meta-property' for property topics to control default web context on links only containing a topic name %BR%\
@@ -324,51 +340,58 @@ sudo -u www-data bin/./rest /SemanticLinksPlugin/reparse -updateweb System</verb
 |  Home: | http://foswiki.org/Extensions/%TOPIC% |
 |  Support: | http://foswiki.org/Support/%TOPIC% |
 
-%META:LINK{name="30" address="System.ACRONYM" scope="internal" topic="ACRONYM" type="autolink" web="System"}%
-%META:LINK{name="5" address="MyProject/Bibliography.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="MyProject/Bibliography"}%
-%META:LINK{name="28" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
-%META:LINK{name="14" address="System.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="System"}%
-%META:LINK{name="18" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="bracket" web="System"}%
-%META:LINK{name="2" address="System.Mosquitos" scope="internal" topic="Mosquitos" type="semantic" web="System"}%
-%META:LINK{name="22" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
-%META:LINK{name="8" address="System.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="System"}%
-%META:LINK{name="6" address="MyProject.Bibliography" scope="internal" topic="Bibliography" type="semantic" web="MyProject"}%
-%META:LINK{name="21" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
-%META:LINK{name="32" address="System.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="System"}%
-%META:LINK{name="20" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin"}%
-%META:LINK{name="7" address="System.Snakes" scope="internal" topic="Snakes" type="semantic" web="System"}%
-%META:LINK{name="16" address="System.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="System"}%
-%META:LINK{name="26" address="System.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="System"}%
-%META:LINK{name="27" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
-%META:LINK{name="25" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
-%META:LINK{name="17" address="System.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="System"}%
-%META:LINK{name="9" address="System.Macros" scope="internal" topic="Macros" type="bracket" web="System"}%
-%META:LINK{name="4" address="System.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="System"}%
-%META:LINK{name="31" address="System.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="System"}%
-%META:LINK{name="19" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
-%META:LINK{name="29" address="System.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="System"}%
-%META:LINK{name="24" address="http://foswiki.org/Extensions/SemanticLinksPlugin" scope="external" type="autolink"}%
-%META:LINK{name="13" address="System.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="System"}%
-%META:LINK{name="1" address="System.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="System"}%
-%META:LINK{name="12" address="System.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="System"}%
-%META:LINK{name="23" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
-%META:LINK{name="10" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
-%META:LINK{name="11" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
-%META:LINK{name="3" address="System.Flies" scope="internal" topic="Flies" type="semantic" web="System"}%
-%META:LINK{name="15" address="System.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="System"}%
-%META:SLPROPERTY{name="SemanticLinksPlugin_DEFAULTWEB" num="1"}%
-%META:SLPROPERTY{name="Cite" num="2"}%
-%META:SLPROPERTY{name="Eat" num="2"}%
+%META:LINK{name="28" address="Main.SitePreferences" scope="internal" topic="SitePreferences" type="autolink" web="Main"}%
+%META:LINK{name="15" address="Main.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="bracket" web="Main"}%
+%META:LINK{name="29" address="Main.WebPreferences" scope="internal" topic="WebPreferences" type="autolink" web="Main"}%
+%META:LINK{name="19" address="Main.%25LOCALSITEPREFS%25" scope="internal" topic="%25LOCALSITEPREFS%25" type="bracket" web="Main"}%
+%META:LINK{name="39" address="Main.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="Main"}%
+%META:LINK{name="11" address="Main.IsPartOf::UserDocumentationCategory|docs::misc" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs::misc" type="bracket" web="Main"}%
+%META:LINK{name="9" address="Main.IsPartOf::UserDocumentationCategory" scope="internal" topic="IsPartOf::UserDocumentationCategory" type="bracket" web="Main"}%
+%META:LINK{name="38" address="Main.WysiwygPlugin" scope="internal" topic="WysiwygPlugin" type="autolink" web="Main"}%
+%META:LINK{name="35" address="Main.WikiWords" scope="internal" topic="WikiWords" type="autolink" web="Main"}%
+%META:LINK{name="31" address="System.PreferenceSettings" scope="internal" topic="PreferenceSettings" type="autolink" web="System"}%
+%META:LINK{name="21" address="Main.Macros" scope="internal" topic="Macros" type="bracket" web="Main"}%
+%META:LINK{name="20" address="$dollarweb.$dollartopic" scope="internal" topic="$dollartopic" type="bracket" web="$dollarweb"}%
+%META:LINK{name="17" address="Main.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="bracket" web="Main"}%
+%META:LINK{name="6" address="//.WebHome" scope="internal" topic="WebHome" type="semantic" web="//"}%
+%META:LINK{name="4" address="Main.Mosquitos" scope="internal" topic="Mosquitos" type="semantic" web="Main"}%
+%META:LINK{name="3" address="Main.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="Main"}%
+%META:LINK{name="1" address="Main.Snakes" scope="internal" topic="Snakes" type="semantic" web="Main"}%
+%META:LINK{name="23" address="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin.reparse" scope="internal" topic="reparse" type="bracket" web="%25SCRIPTURLPATH%7b%22rest%22%7d%25/SemanticLinksPlugin"}%
+%META:LINK{name="13" address="Main.SkinTemplates" scope="internal" topic="SkinTemplates" type="bracket" web="Main"}%
+%META:LINK{name="8" address="MyProject/Bibliography.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="MyProject/Bibliography"}%
+%META:LINK{name="5" address="Main.Flies" scope="internal" topic="Flies" type="semantic" web="Main"}%
+%META:LINK{name="33" address="System.QuerySearch" scope="internal" topic="QuerySearch" type="autolink" web="System"}%
+%META:LINK{name="16" address="System.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="System"}%
+%META:LINK{name="10" address="Main.IsPartOf::UserDocumentationCategory|docs" scope="internal" topic="IsPartOf::UserDocumentationCategory|docs" type="bracket" web="Main"}%
+%META:LINK{name="32" address="Main.MyProject" scope="internal" topic="MyProject" type="autolink" web="Main"}%
+%META:LINK{name="22" address="Main.SemanticIsPartOf" scope="internal" topic="SemanticIsPartOf" type="bracket" web="Main"}%
+%META:LINK{name="2" address="System.UserDocumentationCategory" scope="internal" topic="UserDocumentationCategory" type="semantic" web="System"}%
+%META:LINK{name="36" address="Main.MetaData" scope="internal" topic="MetaData" type="autolink" web="Main"}%
+%META:LINK{name="37" address="System.SemanticLinksPlugin" scope="internal" topic="SemanticLinksPlugin" type="autolink" web="System"}%
+%META:LINK{name="26" address="http://foswiki.org/Support/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="18" address="http://www.w3.org/RDF/Validator/" scope="external" type="bracket"}%
+%META:LINK{name="12" address="Main.IsPartOf" scope="internal" topic="IsPartOf" type="bracket" web="Main"}%
+%META:LINK{name="7" address="Mangroves/Bibliography.Duke2006b" scope="internal" topic="Duke2006b" type="semantic" web="Mangroves/Bibliography"}%
+%META:LINK{name="25" address="http://www.gnu.org/copyleft/gpl.html" scope="external" type="bracket"}%
+%META:LINK{name="34" address="System.MetaData" scope="internal" topic="MetaData" type="autolink" web="System"}%
+%META:LINK{name="27" address="http://foswiki.org/Extensions/SemanticLinksPlugin" scope="external" type="autolink"}%
+%META:LINK{name="24" address="http://www.taxonomy.org.au" scope="external" type="bracket"}%
+%META:LINK{name="30" address="Main.AutoViewTemplatePlugin" scope="internal" topic="AutoViewTemplatePlugin" type="autolink" web="Main"}%
+%META:LINK{name="14" address="Main.VarURLPARAM" scope="internal" topic="VarURLPARAM" type="bracket" web="Main"}%
+%META:SLPROPERTY{name="Cite" num="3"}%
 %META:SLPROPERTY{name="PreyOf" num="1"}%
+%META:SLPROPERTY{name="Eat" num="2"}%
 %META:SLPROPERTY{name="IsPartOf" num="1"}%
-%META:SLPROPERTY{name="SemanticIsPartOf" num="1"}%
+%META:SLPROPERTY{name="SemanticIsPartOf" num="2"}%
 %META:SLPROPERTY{name="Property" num="1"}%
-%META:SLVALUE{name="SemanticIsPartOf__1" fragment="anchor" property="SemanticIsPartOf" propertyaddress="System.SemanticIsPartOf" propertyseq="1" propertyweb="System" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
-%META:SLVALUE{name="Property__1" fragment="AnchorPart" property="Example.Property" propertyaddress="Example.Property" propertyseq="1" propertyweb="Example" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
-%META:SLVALUE{name="Eat__1" property="Eat" propertyaddress="System.Eat" propertyseq="1" propertyweb="System" value="Flies" valueaddress="System.Flies" valuetopic="Flies" valueweb="System"}%
-%META:SLVALUE{name="Cite__1" property="Cite" propertyaddress="System.Cite" propertyseq="1" propertyweb="System" value="Duke2006b" valueaddress="System.Duke2006b" valuetopic="Duke2006b" valueweb="System"}%
-%META:SLVALUE{name="SemanticLinksPlugin_DEFAULTWEB__1" property="SemanticLinksPlugin_DEFAULTWEB" propertyaddress="System.SemanticLinksPlugin_DEFAULTWEB" propertyseq="1" propertyweb="System" value="MyProject/Bibliography" valueaddress="MyProject.Bibliography" valuetopic="Bibliography" valueweb="MyProject"}%
-%META:SLVALUE{name="PreyOf__1" property="PreyOf" propertyaddress="System.PreyOf" propertyseq="1" propertyweb="System" value="Snakes" valueaddress="System.Snakes" valuetopic="Snakes" valueweb="System"}%
-%META:SLVALUE{name="IsPartOf__1" property="IsPartOf" propertyaddress="System.IsPartOf" propertyseq="1" propertyweb="System" value="UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
-%META:SLVALUE{name="Eat__2" property="Eat" propertyaddress="System.Eat" propertyseq="2" propertyweb="System" value="Mosquitos" valueaddress="System.Mosquitos" valuetopic="Mosquitos" valueweb="System"}%
-%META:SLVALUE{name="Cite__2" property="Cite" propertyaddress="System.Cite" propertyseq="2" propertyweb="System" value="MyProject/Bibliography.Duke2006b" valueaddress="MyProject/Bibliography.Duke2006b" valuetopic="Duke2006b" valueweb="MyProject/Bibliography"}%
+%META:SLVALUE{name="PreyOf__1" property="PreyOf" propertyaddress="Main.PreyOf" propertyseq="1" propertyweb="Main" value="Snakes" valueaddress="Main.Snakes" valuetopic="Snakes" valueweb="Main"}%
+%META:SLVALUE{name="Property__1" fragment="AnchorPart" property="Example.Property" propertyaddress="Example.Property" propertyseq="1" propertyweb="Example" value="UserDocumentationCategory" valueaddress="Main.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="Main"}%
+%META:SLVALUE{name="SemanticIsPartOf__1" fragment="anchor" property="SemanticIsPartOf" propertyaddress="Main.SemanticIsPartOf" propertyseq="1" propertyweb="Main" value="UserDocumentationCategory" valueaddress="Main.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="Main"}%
+%META:SLVALUE{name="IsPartOf__1" property="IsPartOf" propertyaddress="Main.IsPartOf" propertyseq="1" propertyweb="Main" value="UserDocumentationCategory" valueaddress="Main.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="Main"}%
+%META:SLVALUE{name="Eat__1" property="Eat" propertyaddress="Main.Eat" propertyseq="1" propertyweb="Main" value="Flies" valueaddress="Main.Flies" valuetopic="Flies" valueweb="Main"}%
+%META:SLVALUE{name="Cite__1" property="Cite" propertyaddress="Main.Cite" propertyseq="1" propertyweb="Main" value="Duke2006b" valueaddress="Mangroves/Bibliography.Duke2006b" valuetopic="Duke2006b" valueweb="Mangroves/Bibliography"}%
+%META:SLVALUE{name="SemanticIsPartOf__2" fragment="anchor" property="System.SemanticIsPartOf" propertyaddress="System.SemanticIsPartOf" propertyseq="2" propertyweb="System" value="System.UserDocumentationCategory" valueaddress="System.UserDocumentationCategory" valuetopic="UserDocumentationCategory" valueweb="System"}%
+%META:SLVALUE{name="Eat__2" property="Eat" propertyaddress="Main.Eat" propertyseq="2" propertyweb="Main" value="Mosquitos" valueaddress="Main.Mosquitos" valuetopic="Mosquitos" valueweb="Main"}%
+%META:SLVALUE{name="Cite__2" property="Cite" propertyaddress="Main.Cite" propertyseq="2" propertyweb="Main" value="MyProject/Bibliography.Duke2006b" valueaddress="MyProject/Bibliography.Duke2006b" valuetopic="Duke2006b" valueweb="MyProject/Bibliography"}%
+%META:SLVALUE{name="Cite__3" property="Cite" propertyaddress="Main.Cite" propertyseq="3" propertyweb="Main" value="..." valueaddress="//.WebHome" valuetopic="WebHome" valueweb="//"}%

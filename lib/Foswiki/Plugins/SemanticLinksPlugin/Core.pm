@@ -402,7 +402,7 @@ sub stashPlainLink {
             and $address =~ /^$Foswiki::regex{abbrevRegex}$/
             and not Foswiki::Func::topicExists(
                 Foswiki::Func::normalizeWebTopicName(
-                    $baseWeb || $Foswiki::Plugins::SESSION->{webName}, $address
+                    $Foswiki::Plugins::SESSION->{webName}, $address
                 )
             )
           )
@@ -410,9 +410,8 @@ sub stashPlainLink {
             $dostash = 0;
         }
         if ($dostash) {
-            my ( $web, $topic, $rev ) =
-              Foswiki::Func::normalizeWebTopicName( $baseWeb
-                  || $Foswiki::Plugins::SESSION->{webName}, $address );
+            my ( $web, $topic, $rev ) = Foswiki::Func::normalizeWebTopicName(
+                $Foswiki::Plugins::SESSION->{webName}, $address );
             my $name = $web . '__' . $topic;
 
             if ( defined $rev ) {
@@ -524,35 +523,37 @@ sub semanticLinksSaveHandler {
 sub _getSemLinkData {
     my ( $property, $value ) = @_;
     my $semlink;
-    my ( $propertyweb, $propertytopic ) =
-      Foswiki::Func::normalizeWebTopicName( $baseWeb
-          || $Foswiki::Plugins::SESSION->{webName}, $property );
+    my ( $propertyweb, $propertytopic ) = Foswiki::Func::normalizeWebTopicName(
+        Foswiki::Func::getPreferencesValue(
+            'SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB')
+          || $Foswiki::Plugins::SESSION->{webName},
+        $property
+    );
     my $propertyaddress = $propertyweb . '.' . $propertytopic;
     my $valueaddress;
     my $valueweb;
     my $valuetopic;
 
-    if ( not exists $propertyattributes{DEFAULTWEB}{$propertyaddress} ) {
+    if ( not exists $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} ) {
         my ($propertyTopicObj) =
           Foswiki::Func::readTopic( $propertyweb, $propertytopic );
 
         if ( $propertyTopicObj->haveAccess('VIEW') ) {
-            my $defweb = $propertyTopicObj->get( 'SLVALUE',
-                'SemanticLinksPlugin_DEFAULTWEB__1' );
-            if ( $defweb->{value} ) {
-                $propertyattributes{DEFAULTWEB}{$propertyaddress} =
-                  $defweb->{value};
+            my $defweb = $propertyTopicObj->getPreference(
+                'SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB');
+            if ($defweb) {
+                $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} =
+                  $defweb;
             }
         }
         else {
 
             # Don't bother checking for VIEW access again
-            $propertyattributes{DEFAULTWEB}{$propertyaddress} = undef;
+            $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} = undef;
         }
     }
     ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
-        $propertyattributes{DEFAULTWEB}{$propertyaddress}
-          || $baseWeb
+        $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress}
           || $Foswiki::Plugins::SESSION->{webName},
         $value
     );
@@ -591,35 +592,37 @@ sub _getMetaSemLinkData {
     my $ofpropaddr = $of->{propertyaddress};
     my $ofvaladdr  = $of->{valueaddress};
     my $metasemlink;
-    my ( $propertyweb, $propertytopic ) =
-      Foswiki::Func::normalizeWebTopicName( $baseWeb
-          || $Foswiki::Plugins::SESSION->{webName}, $property );
+    my ( $propertyweb, $propertytopic ) = Foswiki::Func::normalizeWebTopicName(
+        Foswiki::Func::getPreferencesValue(
+            'SEMANTICLINKSPLUGIN_DEFAULT_PROPERTYWEB')
+          || $Foswiki::Plugins::SESSION->{webName},
+        $property
+    );
     my $propertyaddress = $propertyweb . '.' . $propertytopic;
     my $valueaddress;
     my $valueweb;
     my $valuetopic;
 
-    if ( not exists $propertyattributes{DEFAULTWEB}{$propertyaddress} ) {
+    if ( not exists $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} ) {
         my ($propertyTopicObj) =
           Foswiki::Func::readTopic( $propertyweb, $propertytopic );
 
         if ( $propertyTopicObj->haveAccess('VIEW') ) {
-            my $defweb = $propertyTopicObj->get( 'SLVALUE',
-                'SemanticLinksPlugin_DEFAULTWEB__1' );
-            if ( $defweb->{value} ) {
-                $propertyattributes{DEFAULTWEB}{$propertyaddress} =
-                  $defweb->{value};
+            my $defweb = $propertyTopicObj->getPreference(
+                'SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB');
+            if ($defweb) {
+                $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} =
+                  $defweb;
             }
         }
         else {
 
             # Don't bother checking for VIEW access again
-            $propertyattributes{DEFAULTWEB}{$propertyaddress} = undef;
+            $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} = undef;
         }
     }
     ( $valueweb, $valuetopic ) = Foswiki::Func::normalizeWebTopicName(
-        $propertyattributes{DEFAULTWEB}{$propertyaddress}
-          || $baseWeb
+        $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress}
           || $Foswiki::Plugins::SESSION->{webName},
         $value
     );
