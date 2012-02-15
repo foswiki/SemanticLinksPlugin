@@ -12,7 +12,6 @@ use warnings;
 
 use Assert;
 use Foswiki::Func ();    # The plugins API
-use Foswiki::Plugins();
 
 my %templates;
 my %semanticlinks;
@@ -330,6 +329,20 @@ sub getTemplate {
 
 sub beforeSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
+    my %DATA = _parse( $topicObject->getEmbeddedStoreForm(), $topicObject );
+
+    foreach my $META ( keys %DATA ) {
+        $topicObject->putAll( $META, @{ $DATA{$META} } );
+    }
+
+    return;
+}
+
+# Parse $text for links, using topic/web/topicObject as context
+sub _parse {
+    my ( $text, $topicObject ) = @_;
+    my $web   = $topicObject->web();
+    my $topic = $topicObject->topic();
 
     init();
     $hardvars{WEB}       = $web;
@@ -340,15 +353,15 @@ sub beforeSaveHandler {
     $topicObject->remove('LINK');
     $topicObject->remove('SLVALUE');
     $topicObject->remove('SLPROPERTY');
-    $text = $topicObject->getEmbeddedStoreForm();
 
     # Expand prefs
     $text =~ s/(%([A-Z]+)%)/
         Foswiki::Func::getPreferencesValue($2) || $hardvars{$2} || $1/gex;
-    semanticLinksSaveHandler( $text, $topic, $web, $topicObject );
-    plainLinksSaveHandler( $text, $topic, $web, $topicObject );
 
-    return;
+    return (
+        semanticLinksSaveHandler( $text, $topic, $web, $topicObject ),
+        plainLinksSaveHandler( $text, $topic, $web, $topicObject )
+    );
 }
 
 sub plainLinksSaveHandler {
@@ -370,9 +383,8 @@ s/\[\[[:]?\s*([^\]\n\?\#]+?)(\?([^\]\n\#]+?))?(\#([^\]\n]+?))?\s*\](\[([^\]\n]+?
         $Foswiki::regex{abbrevRegex})
         ($Foswiki::regex{anchorRegex})?/
         stashPlainLink('internal', 'autolink', ($1 || '') . $3, undef, $4)/gexm;
-    $topicObject->putAll( 'LINK', values %links );
 
-    return;
+    return ( 'LINK' => [ values %links ] );
 }
 
 sub stashPlainLink {
@@ -439,6 +451,7 @@ sub stashPlainLink {
 
 sub semanticLinksSaveHandler {
     my ( $text, $topic, $web, $topicObject ) = @_;
+    my %DATA;
     my @propertyaddresses;
 
     # Instead of rendering, linkHandler will be set to stashSemLink() which
@@ -505,19 +518,19 @@ sub semanticLinksSaveHandler {
             }
         }
         @SLVALUE = sort { $a->{propertyseq} <=> $b->{propertyseq} } @SLVALUE;
-        $topicObject->putAll( 'SLPROPERTY', @SLPROPERTY );
-        $topicObject->putAll( 'SLVALUE',    @SLVALUE );
+        $DATA{SLPROPERTY} = [@SLPROPERTY];
+        $DATA{SLVALUE}    = [@SLVALUE];
         @SLMETAVALUE =
           sort { $a->{propertyseq} <=> $b->{propertyseq} } @SLMETAVALUE;
-        $topicObject->putAll( 'SLMETAPROPERTY', @SLMETAPROPERTY );
-        $topicObject->putAll( 'SLMETAVALUE',    @SLMETAVALUE );
+        $DATA{SLMETAPROPERTY} = [@SLMETAPROPERTY];
+        $DATA{SLMETAVALUE}    = [@SLMETAVALUE];
 
         # These are unused legacy types
-        $topicObject->putAll( 'SLPROPERTYVALUE', () );
-        $topicObject->putAll( 'SLPROPERTIES',    () );
+        $DATA{SLPROPERTYVALUE} = [];
+        $DATA{SLPROPERTIES}    = [];
     }
 
-    return;
+    return %DATA;
 }
 
 sub _getSemLinkData {
@@ -868,8 +881,8 @@ sub _checkHash {
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 
-Copyright (C) 2010-2011 Paul.W.Harvey@csiro.au, http://trin.org.au
-Copyright (C) 2010-2011 Foswiki Contributors. Foswiki Contributors
+Copyright (C) 2010-2012 Paul.W.Harvey@csiro.au, http://trin.org.au
+Copyright (C) 2010-2012 Foswiki Contributors. Foswiki Contributors
 are listed in the AUTHORS file in the root of this distribution.
 NOTE: Please extend that file, not this notice.
 
