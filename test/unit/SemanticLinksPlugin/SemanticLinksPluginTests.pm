@@ -159,7 +159,9 @@ HERE
     $this->assert_deep_equals( \%expected_data, \%actual_data );
 
     # Check the save handler
-    $this->_check_save( $text, \%expected_data );
+    $this->{test_topicObject}->text($text);
+    $this->{test_topicObject}->save();
+    $this->_check_save( \%expected_data );
 
     return;
 }
@@ -227,17 +229,24 @@ HERE
     $this->assert_deep_equals( \%expected_data, \%actual_data );
 
     # Check the save handler
-    $this->_check_save( $text, \%expected_data );
+    $this->{test_topicObject}->text($text);
+    $this->{test_topicObject}->save();
+    $this->_check_save( \%expected_data );
+    $this->{test_topicObject}->text('nothing');
+    $this->{test_topicObject}->save();
+    $this->_check_save( {} );
+    $this->{test_topicObject}
+      ->putAll( 'FIELD', { name => 'TestFormfield', value => $text } );
+    $this->{test_topicObject}->save();
+    $this->_check_save( \%expected_data );
 
     return;
 }
 
 sub _check_save {
-    my ( $this, $text, $expected_data ) = @_;
+    my ( $this, $expected_data ) = @_;
     my $checkObj;
 
-    $this->{test_topicObject}->text($text);
-    $this->{test_topicObject}->save();
     ($checkObj) =
       Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
     foreach my $META (
