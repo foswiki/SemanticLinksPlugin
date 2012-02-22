@@ -773,7 +773,7 @@ sub restReparseHandler {
             $count += 1;
         }
     }
-    return $restResult . "\n\n</pre>";
+    return ( $restResult || '' ) . "\n\n</pre>";
 }
 
 sub _report {
