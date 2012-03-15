@@ -13,7 +13,7 @@ use warnings;
 use Assert;
 use Foswiki::Func ();    # The plugins API
 
-sub TRACE { 1 }
+use constant TRACE => 0;
 require Data::Dumper if TRACE;
 
 my %templates;
