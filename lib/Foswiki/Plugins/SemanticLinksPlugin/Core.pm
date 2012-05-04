@@ -165,7 +165,8 @@ s/\[\[([^:][^\]\n?]+?)::([^\]\n?\#\{]+?)(\?([^\]\n\#\{]+?))?(\#([^\]\n\{]+?))?(\
 # SemanticLinksPlugin::MissingLink template on the property topic.
 sub renderLink {
     my (@attrs) = @_;
-    print STDERR "In renderLink() with args: " . Data::Dumper->Dump(\@attrs) if TRACE;
+    print STDERR "In renderLink() with args: " . Data::Dumper->Dump( \@attrs )
+      if TRACE;
     my $semlink = _getSemLinkData( $attrs[$PROPERTY], $attrs[$VALUE] );
     my $templatetxt;
     my $tmplName = '';
@@ -554,26 +555,32 @@ sub _getSemLinkData {
     print STDERR "_getSemLinkData($property, $value)\n" if TRACE;
 
     if ( not exists $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} ) {
-        print STDERR "No valueweb entry for property '$propertyaddress'\n" if TRACE;
+        print STDERR "No valueweb entry for property '$propertyaddress'\n"
+          if TRACE;
         my ($propertyTopicObj) =
           Foswiki::Func::readTopic( $propertyweb, $propertytopic );
 
         if ( $propertyTopicObj->haveAccess('VIEW') ) {
-            print STDERR "have access to property '$propertyaddress'\n" if TRACE;
+            print STDERR "have access to property '$propertyaddress'\n"
+              if TRACE;
             my $defweb = $propertyTopicObj->getPreference(
                 'SEMANTICLINKSPLUGIN_DEFAULT_VALUEWEB');
             if ($defweb) {
-                print STDERR "got defaultweb '$defweb' from property '$propertyaddress'\n" if TRACE;
+                print STDERR
+                  "got defaultweb '$defweb' from property '$propertyaddress'\n"
+                  if TRACE;
                 $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} =
                   $defweb;
             }
             else {
-                print STDERR "go defaultweb on property '$propertyaddress'\n" if TRACE;
+                print STDERR "go defaultweb on property '$propertyaddress'\n"
+                  if TRACE;
             }
         }
         else {
 
             print STDERR "no access to property '$propertyaddress'\n" if TRACE;
+
             # Don't bother checking for VIEW access again
             $propertyattributes{DEFAULT_VALUEWEB}{$propertyaddress} = undef;
         }
@@ -613,7 +620,7 @@ sub _getSemLinkData {
         };
         $semanticlinks{$propertyaddress}{$valueaddress} = $semlink;
     }
-    print STDERR Data::Dumper->Dump([$semlink]) if TRACE;
+    print STDERR Data::Dumper->Dump( [$semlink] ) if TRACE;
 
     return $semlink;
 }
